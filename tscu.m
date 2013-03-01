@@ -18,6 +18,7 @@ function e = tscu(x,y,varargin)
 %   the time series in Y by using training set X by using the options 
 %
 %
+tic
 options = getOptions;
 if nargin == 0
     error('tscu:noinput','Not enough input arguments.');
@@ -43,6 +44,8 @@ else
                 options.classifier = varargin{i+1};
             case 'alignment'
                 options.alignment = varargin{i+1};
+            case 'DTWbandwidth'
+                options.DTWbandwidth = varargin{i+1};
         end
     end
 end
@@ -54,6 +57,12 @@ if options.displayReportLines
     displine('Size of training set',sprintf('%d',size(x,1)),options);
     displine('Size of testing set',sprintf('%d',size(y,1)),options);
     displine('Time series length',sprintf('%d',size(x,2)-1),options);
+    displine('Classification method',options.classifier,options);
+    displine('Alignment method',options.alignment,options);
+    if strcmp(options.alignment,'CDTW')
+        displine('DTW band width (%)',sprintf('%5.2f',options.DTWbandwidth),options);
+    end
+
 end
 
 % Classification
@@ -76,6 +85,7 @@ if options.displayReportLines
     displine('Z-value',sprintf('%-8.3f',perf.Z),options);
     fprintf('%s',perf.confmatdisplay);
 end
+displine('Time elapsed (sec)',sprintf('%-8.2f',toc),options);
 end
 
 
@@ -89,6 +99,7 @@ function options = getOptions(varargin)
 % alignment: Alignment method
 %   'None'   : no alignment
 %   'DTW'    : Dynamic Time Warping
+%   'CDTW'   : Constained Time Warping
 %   default  : 'None'
 %
 % displayReportLines: Will debugging info lines be displayed?
@@ -109,6 +120,7 @@ options.alignment           = 'None';
 options.displayReportLines  = 1;
 options.reportLineWidth     = 40;
 options.trainingRatio       = 0.3;
+options.DTWbandwidth        = 6;
 
 if nargin > 0 && mod(nargin,2) ~= 0
     error('tscu:invalidoption','The number of input variables must be even');
@@ -187,6 +199,8 @@ for i = 1 : n*m
                 distance = sqrt(sum((xObject - yObject).^2)); 
             case 'DTW'
                 distance = dtwalignment(xObject,yObject,options);
+            case 'CDTW'
+                distance = cdtwalignment(xObject,yObject,options);
             otherwise
                 distance = sqrt(sum((xObject - yObject).^2));
         end
@@ -200,9 +214,17 @@ end
 function [distance path1 path2] = dtwalignment(x,y,options)
 %DTWALIGNMENT Dynamic Time Warping alignment
 %   [DISTANCE PATH1 PATH2]=DTWALIGNMENT(X,Y,OPTIONS) aligns
-%   the objects X and Y using available options OPTION and returns
+%   the objects X and Y using available options OPTIONS and returns
 %   the distance in DISTANCE and warping paths in PATH1 and PATH2.
 [distance path1 path2]=dtw(x,y,length(x));
+end
+
+function [distance path1 path2] = cdtwalignment(x,y,options)
+%CDTWALIGNMENT Constained Dynamic Time Warping alignment
+%   [DISTANCE PATH1 PATH2]=CDTWALIGNMENT(X,Y,OPTIONS) aligns
+%   the objects X and Y using available options OPTIONS and returns
+%   the distance in DISTANCE and warping paths in PATH1 and PATH2.
+[distance path1 path2]=dtw(x,y,floor(options.DTWbandwidth*length(x)/100));
 end
 
 function perf = performance(truelabels,estimatedlabels)
