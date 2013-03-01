@@ -1,0 +1,157 @@
+\documentclass{article}
+\usepackage{fullpage}
+
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[config, labelfont=scriptsize, textfont=scriptsize]{subfig}
+\newcommand{\B}[1]{\boldsymbol{#1}}
+\newtheorem{theorem}{Theorem}
+\newtheorem{remark}{Remark}
+\usepackage{amsmath,epsfig}
+\usepackage{eqparbox}
+\usepackage{multirow}
+\usepackage{booktabs}
+%\renewcommand{\thesubfigure}{\arabic{subfigure}}
+
+\title{Time Series Classification Utility v1.0\\
+User Manual} 
+\author{H\"useyin Kaya}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\section{Introduction}
+Time Series Classification Utility (TSCU) is a simple MATLAB program that you can use it to classify time series by choosing a couple of alignment methods including Dynamic Time Warping (DTW), Constrained DTW (CDTW) and Signal Alignment via Genetic Algorithm (SAGA).
+
+I decided to prepare TSCU during my Ph.D which is about a new time series alignment algorithm and its application to various real-worl problems. There were (and there are still) a bunch of useful tools for time series alignment, but none of them seemed general enough. I also wanted to create a useful website so that people searching for a time series classification task will find all crucial information quickly.
+\section{Installation}
+TSCU is freely available from GitHub. Majority of the code lies in just one MATLAB script: tscu.m. However it is recommended to fetch the whole repository (which is about 1Mb) in order to obtain a few dependent files. You can use the following command to download the repository:
+\begin{verbatim}
+git clone https://github.com/hkayabilisim/TSCU.git
+\end{verbatim}
+This will checkout the repository into a new directory named TSCU.
+After downloading the source code, you should follow the following steps.
+
+\begin{itemize}
+\item In order to use the alignment methods DTW and constrained DTW, you should compile the mex file dtw.c by issuing the following command on MATLAB:
+\begin{verbatim}
+mex dtw.c
+\end{verbatim}
+
+\item If everyting goes well, you will have a new executable file with extension name begins with mex. In my Macbook Pro, its name is dtw.mexmaci64. If you have problems in compiling the mex file (you are very likely to face such problems, by the way), then you can look for compiled binaries on TSCU repository.
+
+\item If you want to test the utility with the University of California, Riverise (UCR) time series repository, then you should request the dataset from Eamonn Keogh personally because I don't have permission to provide the dataset. I strongly suggest you to have a copy of this large and diverse dataset if you want to do detailed analysis on alignment techniques.
+
+\item If you want to test the alignment algorithm Signal Alignment via Genetic Algorithm (SAGA), you should have Genetic Algorithm Toolbox of MATLAB. SAGA is optional, so if you don't have this toolbox, don't bother. You can still use DTW or constained DTW for alignment.
+\end{itemize}
+\section{Running}
+A straightforward way yo to test the installation is to run a few tasks. Let's start with the Synthetic Control dataset from University of California-Riverside (UCR) time series repository. This dataset is freely available on UCR time repository web page\footnote{http://www.cs.ucr.edu/~eamonn/time\_series\_data/.}. There are $6$ different classes of time series each has length $60$. There are totally $600$ time series half of it is reversed for training. Some examples of the dataset are displayed in Figure~\ref{fig_synthetic}.
+
+	\begin{figure}[!h]
+	\centering
+	\subfloat[normal]{\includegraphics[width=0.33\textwidth]{../Experiment59-synthetic-control-01.pdf}}%
+	\subfloat[cyclic]{\includegraphics[width=0.33\textwidth]{../Experiment59-synthetic-control-02.pdf}}%
+	\subfloat[increasing trend]{\includegraphics[width=0.33\textwidth]{../Experiment59-synthetic-control-03.pdf}}\\%
+	\subfloat[decreasing trend]{\includegraphics[width=0.33\textwidth]{../Experiment59-synthetic-control-04.pdf}}%
+	\subfloat[upward shift]{\includegraphics[width=0.33\textwidth]{../Experiment59-synthetic-control-05.pdf}}%
+	\subfloat[downward shift]{\includegraphics[width=0.33\textwidth]{../Experiment59-synthetic-control-06.pdf}}%
+	\caption{Some examples from 6 different control charts used in the synthetic control dataset.}
+	\label{fig_synthetic}
+	\end{figure}
+
+After downloading training and testing set, you can classify the time series in the testing set by using the following command:
+\begin{scriptsize}
+\begin{verbatim}
+>> trn=load('synthetic_control_TRAIN');
+>> tst=load('synthetic_control_TEST');
+>> tscu(trn,tst)
+
+Size of training set.....................: 300
+Size of testing set......................: 300
+Time series length.......................: 60
+Classification method....................: 1-NN
+Alignment method.........................: None
+Overall Accuracy.........................: 0.880   
+Overall Error............................: 0.120   
+Producer Accuracy........................: 0.440   1.000   0.980   1.000   0.940   0.920   
+User Accuracy............................: 1.000   0.833   0.891   0.862   0.887   0.885   
+Kappa....................................: 0.856   
+Z-value..................................: 5.439   
+Confusion matrix
+          1     2     3     4     5     6    UA    TO 
+    1    22     0     0     0     0     0 1.000    22 
+    2    10    50     0     0     0     0 0.833    60 
+    3     3     0    49     0     3     0 0.891    55 
+    4     4     0     0    50     0     4 0.862    58 
+    5     5     0     1     0    47     0 0.887    53 
+    6     6     0     0     0     0    46 0.885    52 
+   PA 0.440 1.000 0.980 1.000 0.940 0.920 
+   TO    50    50    50    50    50    50         300 
+Time elapsed (sec).......................: 1.08 
+\end{verbatim}
+\end{scriptsize}
+Output of TSCU is pretty self-explanatory.  As you see from the output, TSCU does not use an alignment algorithm in its default form. Overall error in this case is $0.12$ which is the same as the published error on UCR web site. TSCU also outputs confusion matrix which can sometimes be usefull for further analysis.
+
+If you want to use Dynamic Time Warping (DTW) as the alignmnt method for the same dataset, then you can append the following options:
+\begin{scriptsize}
+\begin{verbatim}
+>> trn=load('synthetic_control_TRAIN');
+>> tst=load('synthetic_control_TEST');
+>> tscu(trn,tst,'alignment','DTW')
+
+Size of training set.....................: 300
+Size of testing set......................: 300
+Time series length.......................: 60
+Classification method....................: 1-NN
+Alignment method.........................: DTW
+Overall Accuracy.........................: 0.993   
+Overall Error............................: 0.007   
+Producer Accuracy........................: 0.960   1.000   1.000   1.000   1.000   1.000   
+User Accuracy............................: 1.000   0.980   1.000   1.000   0.980   1.000   
+Kappa....................................: 0.992   
+Z-value..................................: 24.884  
+Confusion matrix
+          1     2     3     4     5     6    UA    TO 
+    1    48     0     0     0     0     0 1.000    48 
+    2     1    50     0     0     0     0 0.980    51 
+    3     0     0    50     0     0     0 1.000    50 
+    4     0     0     0    50     0     0 1.000    50 
+    5     1     0     0     0    50     0 0.980    51 
+    6     0     0     0     0     0    50 1.000    50 
+   PA 0.960 1.000 1.000 1.000 1.000 1.000 
+   TO    50    50    50    50    50    50         300 
+Time elapsed (sec).......................: 5.77  
+\end{verbatim}
+\end{scriptsize}
+
+\section{Options}
+
+\subsection{\texttt{'alignment'}} 
+This option specifies the alignment algorithm used in distance calculation between any two time series. The following option are available.
+\subparagraph*{\texttt{'None'}} {\it (default)} In this case no alignment takes place and usual Euclidean distance between two time series is taken as the distance.
+\subparagraph*{\texttt{'DTW'}} Standard Dynamic Time Warping is used in its original simple form without any lower bounding or bands. The implementation is based on The UCR Suite\footnote{http://www.cs.ucr.edu/\%7Eeamonn/UCRsuite.html}. The code is written as a MATLAB MEX file to gain some speed. However one should compile the mex file {\it dtw.c} to be able to use it in TSCU. 
+\subparagraph*{\texttt{'CDTW'}} Constrained Dynamic Time Warping in which the path is constrained in Sakoe-Chiba band. It is implemented again in the same mex file {\it dtw.c} however one should use the additional option \texttt{'DTWbandwidth'} to set the width of the band.
+
+\subsection{\texttt{'DTWbandwidth'}} 
+\subparagraph*{$6$} {\it default} This parameter is used when one choose \texttt{'CDTW'} as the alignment method. It is the width of the Sakoe-Chiba band defined in percentage. Setting it to $100$ is the same effect as running DTW.
+
+\section{Examples}
+In order to classify synthetic control dataset with default options you can use the following commands provided that you first downloaded the dataset:
+\begin{verbatim}
+trn=load('synthetic_control_TRAIN');
+tst=load('synthetic_control_TEST');
+
+tscu(trn,tst)
+\end{verbatim}
+You can specify the alignment algorithm by using the option \texttt{'alignment'}. For instance:
+\begin{verbatim}
+tscu(trn,tst,'alignment','DTW')
+\end{verbatim}
+choose good old Dynamic Time Warping method. In order use constrained DTW, you can use \texttt{'CDTW'} together with \texttt{'DTWbandwidth'}.
+\begin{verbatim}
+tscu(trn,tst,'alignment','CDTW','DTWbandwidth',6)
+\end{verbatim}
+
+\end{document}

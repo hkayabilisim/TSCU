@@ -1,0 +1,128 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+<meta name="description" content="Time Series Classification Utility (TSCU"/>
+<meta name="keywords" content="Time Series, Classification, MATLAB"/> 
+<meta name="author" content="HÃseyin Kaya"/> 
+<link rel="stylesheet" type="text/css" href="default.css" media="screen"/>
+<title>Time Series Classification Utility (TSCU)</title>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-38829843-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+<body>
+<div class="container">
+	<div class="top"> <a href="index.html"><span>Time Series Classification Utility (TSCU)</span></a> </div>
+	<div class="header"></div>
+	<div class="main">
+		<div class="item">
+			<div class="date"> <div>FEB</div> <span>26</span> </div>
+			<div class="content">
+				<h1>Examples</h1>
+				<div class="body">
+					<ul>
+						<li>First of all, please download synthetic control dataset from <a href="http://www.cs.ucr.edu/~eamonn/time_series_data/">UCR time series repository</a>. It is provided as free. You can also request the rest of the dataset from Eamonn Keogh.</li>
+						<li>Assuming you downloadaed the training and testing set, you should first load the dataset as follows:
+						<blockquote>
+							trn=load('synthetic_control_TRAIN');
+							tst=load('synthetic_control_TEST');
+						</blockquote>
+						You can then classify the time series in the testing set by using the default options as follows:
+						<blockquote>
+							tscu(trn,tst)
+						</blockquote>
+						The command above will create the following output:
+<pre>
+Size of training set.....................: 300
+Size of testing set......................: 300
+Time series length.......................: 60
+Classification method....................: 1-NN
+Alignment method.........................: None
+Overall Accuracy.........................: 0.880   
+Overall Error............................: 0.120   
+Producer Accuracy........................: 0.440   1.000   0.980   1.000   0.940   0.920   
+User Accuracy............................: 1.000   0.833   0.891   0.862   0.887   0.885   
+Kappa....................................: 0.856   
+Z-value..................................: 5.439   
+Confusion matrix
+          1     2     3     4     5     6    UA    TO 
+    1    22     0     0     0     0     0 1.000    22 
+    2    10    50     0     0     0     0 0.833    60 
+    3     3     0    49     0     3     0 0.891    55 
+    4     4     0     0    50     0     4 0.862    58 
+    5     5     0     1     0    47     0 0.887    53 
+    6     6     0     0     0     0    46 0.885    52 
+   PA 0.440 1.000 0.980 1.000 0.940 0.920 
+   TO    50    50    50    50    50    50         300 
+Time elapsed (sec).......................: 1.17 
+</pre></li>
+						<li>If you want to use Dynamic Time Warping then you should append 'alignment' option as follows: 
+						<blockquote>
+							tscu(trn,tst,'alignment','DTW')
+						</blockquote></li>
+						<li>You can also use Constrained Dynamic Time Warping by using 'CDTW' option as follows:	
+						<blockquote>
+							tscu(trn,tst,'alignment','CDTW')
+						</blockquote>
+						In this case, band width is taken as 6% by default. </li>
+						<li>If you want to change also the band width than you can use 'DTWbandwidth' option:
+						<blockquote>
+							tscu(trn,tst,'alignment','CDTW','DTWbandwidth',10)
+						</blockquote></li>
+
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="navigation">
+
+		<h1>Utility</h1>
+		<ul>
+			<li><a href="source.html">source code</a></li>
+			<li><a href="documentation.html">documentation</a></li>
+			<li><a href="examples.html">examples</a></li>
+		</ul>
+
+		<h1>Alignment</h1>
+		<ul>
+			<li><a href="dtw.html">DTW</a></li>
+			<li><a href="cdtw.html">Constrained DTW</a></li>
+			<li><a href="saga.html">SAGA</a></li>
+		</ul>
+
+		<h1>Classification</h1>
+		<ul>
+			<li><a href="1-NN.html">1-NN</a></li>
+		</ul>
+
+		<h1>Dataset</h1>
+		<ul>
+			<li><a href="UCR.html">UCR</a></li>
+			<li><a href="UCI.html">UCI</a></li>
+		</ul>
+	</div>
+	
+	<div class="clearer"><span></span></div>
+
+	<div class="footer">&copy; 2006 <a href="index.html">Website.com</a>. Valid <a href="http://jigsaw.w3.org/css-validator/check/referer">CSS</a> &amp; <a href="http://validator.w3.org/check?uri=referer">XHTML</a>. Template design by <a href="http://templates.arcsin.se">Arcsin</a>
+	</div>
+
+</div>
+
+</body>
+
+</html>
