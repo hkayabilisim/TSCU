@@ -27,7 +27,16 @@ Please see http://web.itu.edu.tr/huseyinkaya/tscu and User Manual.
 
 TODO
 ====
-* SAGA will be added as an alternative alignment method.
 * Paralel computing option will be added.
 * Estimated labels should be contained in the output.
 * Optimization subroutines should be added as an option.
+
+FEATURES
+========
+* Dynamic Time Warping, Constrained Dynamic Time Warping and Signal
+  Alignment via Genetic Algorithm (SAGA) are available for candidate
+  alignment methods.
+
+KNOWN ISSUES
+============
+* TSCU can not use multi-channel time series. 

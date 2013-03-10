@@ -1,4 +1,4 @@
-function e = tscu(x,y,varargin)
+function out = tscu(x,y,varargin)
 %TSCU Time Series Classification Utility
 %   TSCU(X) first divides the set X into training and testing set
 %   randomly, then classifies the time series in testing set by using
@@ -15,8 +15,9 @@ function e = tscu(x,y,varargin)
 %   integer.
 %
 %   TSCU(X,Y,'option1',value1,'option2',value2,...) classifies 
-%   the time series in Y by using training set X by using the options 
+%   the time series in Y by using training set X by using the options. 
 %
+%   Z = TSCU(...) returns output values in the structure Z.
 %
 tic
 options = getOptions;
@@ -24,10 +25,8 @@ if nargin == 0
     error('tscu:noinput','Not enough input arguments.');
 elseif nargin == 1
     [x y]=divideset(x,options);
-    if options.displayReportLines
-        displine('Size of input set',sprintf('%d',size(x,1)),options);
-        displine('Dividing input into trn/tst','done',options);
-    end
+    displine('Info','Size of input set',sprintf('%d',size(x,1)),options);
+    displine('Info','Dividing input into trn/tst','done',options);
 elseif nargin == 2,
     if size(x,2) ~= size(y,2)
         error('tscu:invalidlength','Length of time series in training and testing sets should be equal');
@@ -40,30 +39,40 @@ if mod(optarglength,2) ~= 0
 else
     for i=1:2:optarglength
         switch varargin{i}
-            case 'classifier'
+            case 'Classifier'
                 options.classifier = varargin{i+1};
-            case 'alignment'
+            case 'Alignment'
                 options.alignment = varargin{i+1};
             case 'DTWbandwidth'
                 options.DTWbandwidth = varargin{i+1};
+            case 'LogLevel'
+                options.loglevel = varargin{i+1};
+            case 'MATLABPool'
+                options.MATLABPool = varargin{i+1};
+            case 'SAGACostFcn'
+                options.SAGACostFcn = varargin{i+1};
         end
     end
 end
     
-    
+% Opening MATLAB pool
+if ~isempty(options.MATLABPool)
+    displine('Info','Setting parallel processing','',options);
+    matlabpool close
+    matlabpool('open',options.MATLABPool);
+end
 
 % Display some debug
-if options.displayReportLines
-    displine('Size of training set',sprintf('%d',size(x,1)),options);
-    displine('Size of testing set',sprintf('%d',size(y,1)),options);
-    displine('Time series length',sprintf('%d',size(x,2)-1),options);
-    displine('Classification method',options.classifier,options);
-    displine('Alignment method',options.alignment,options);
-    if strcmp(options.alignment,'CDTW')
-        displine('DTW band width (%)',sprintf('%5.2f',options.DTWbandwidth),options);
-    end
-
+displine('Info','Size of training set',sprintf('%d',size(x,1)),options);
+displine('Info','Size of testing set',sprintf('%d',size(y,1)),options);
+displine('Info','Time series length',sprintf('%d',size(x,2)-1),options);
+displine('Info','Classification method',options.classifier,options);
+displine('Info','Alignment method',options.alignment,options);
+if strcmp(options.alignment,'CDTW')
+    displine('Info','DTW band width (%)',sprintf('%5.2f',options.DTWbandwidth),options);
 end
+displine('Info','MATLAB Pool',options.MATLABPool,options);
+displine('Info','SAGA cost function',options.SAGACostFcn,options);
 
 % Classification
 switch options.classifier
@@ -76,37 +85,53 @@ end
 
 % Performance
 perf = performance(y(:,1),labels);
-if options.displayReportLines
-    displine('Overall Accuracy',sprintf('%-8.3f',perf.OA),options);
-    displine('Overall Error',sprintf('%-8.3f',perf.error),options);
-    displine('Producer Accuracy',sprintf('%-8.3f',perf.PA),options);
-    displine('User Accuracy',sprintf('%-8.3f',perf.UA),options);
-    displine('Kappa',sprintf('%-8.3f',perf.kappa),options);
-    displine('Z-value',sprintf('%-8.3f',perf.Z),options);
-    fprintf('%s',perf.confmatdisplay);
-end
-displine('Time elapsed (sec)',sprintf('%-8.2f',toc),options);
+displine('Info','Overall Accuracy',sprintf('%-8.3f',perf.OA),options);
+displine('Info','Overall Error',sprintf('%-8.3f',perf.error),options);
+displine('Info','Producer Accuracy',sprintf('%-8.3f',perf.PA),options);
+displine('Info','User Accuracy',sprintf('%-8.3f',perf.UA),options);
+displine('Info','Kappa',sprintf('%-8.3f',perf.kappa),options);
+displine('Info','Z-value',sprintf('%-8.3f',perf.Z),options);
+displine('Debug','Confusion matrix',sprintf('\n%s',perf.confmatdisplay),options);
+displine('Info','Time elapsed (sec)',sprintf('%-8.2f',toc),options);
+
+% Returning output
+out.labels = labels;
 end
 
 
 function options = getOptions(varargin)
 % Available options are:
 %
-% classifier: The preferrred classification technique
+% Classifier: The preferrred classification technique
 %   '1-NN'   : 1 Nearest Neighbor
 %   default  : '1-NN'
 %
-% alignment: Alignment method
+% Alignment: Alignment method
 %   'None'   : no alignment
 %   'DTW'    : Dynamic Time Warping
 %   'CDTW'   : Constained Time Warping
+%   'SAGA'   : Signal Alignment via Genetic Algorithm
 %   default  : 'None'
 %
-% displayReportLines: Will debugging info lines be displayed?
-%   0        : Do not display report lines
-%   1        : Display report lines
-%   default  : 1
+% LogLevel: Log level
+%   'Emergency'  : (level 0)
+%   'Alert'      : (level 1)
+%   'Critical'   : (level 2)
+%   'Error'      : (level 3)
+%   'Warning'    : (level 4)
+%   'Notice'     : (level 5)
+%   'Info'       : (level 6) 
+%   'Debug'      : (level 7)
+%   default      : 'Info'
 %
+% SAGACostFcn: Cost function used in SAGA
+%   'Jcost0'     : MATLAB, interp1
+%   'Jcost1'     : MEX, LAPACK,
+%   default      : 'Jcost0'
+%
+% MATLABPool: MATLAB pool used for parallel computing
+%   default : '' no pool for parallel computing.
+%   
 % reportLineWidth: Line width of report lines. Actually it defines
 %   the width of the first part of the lines.
 %   default = 60
@@ -117,10 +142,12 @@ function options = getOptions(varargin)
 
 options.classifier          = '1-NN';
 options.alignment           = 'None';
-options.displayReportLines  = 1;
+options.loglevel            = 'Info';
 options.reportLineWidth     = 40;
 options.trainingRatio       = 0.3;
 options.DTWbandwidth        = 6;
+options.MATLABPool          = '';
+options.SAGACostFcn         = 'Jcost0';
 
 if nargin > 0 && mod(nargin,2) ~= 0
     error('tscu:invalidoption','The number of input variables must be even');
@@ -129,23 +156,50 @@ end
 
 end
 
-function displine(k,v,o)
+function displine(l,k,v,o)
 %DISPLINE Display a report line
-%   DISPLINE(K,V,O) display the string K with value V by using
-%   the parameters in O. For example, DISPLINE('Length',12,options)
+%   DISPLINE(L,K,V,O) display the string K with value V by using
+%   the parameters in O if current loglevel is less than or equal to
+%   logvel K. For example, DISPLINE('Info','Length',12,options)
 %   will display
-%   Length.......................: 12
+%   Length.......................: 12 
+%   if the current log level option is 'Info' or 'Debug'. 
+%   See options.loglevel setting.
 
-if o.displayReportLines
+if getloglevelindex(l) <= getloglevelindex(o.loglevel)
     fprintf('%s',k);
     for i=length(k):o.reportLineWidth
         fprintf('.');
     end
     fprintf(': %s\n',v);
-    
 end
 end
 
+function i = getloglevelindex(l)
+%GETLOGLEVELINDEX  Conversion of log level string.
+%   GETLOGLEVELINDEX(L) gets the corresponding integer for a given
+%   log level L.
+switch l
+    case 'Emergency' 
+        i = 0;
+    case 'Alert'
+        i = 1;
+    case 'Critical' 
+        i = 2;
+    case 'Error'
+        i = 3; 
+    case 'Warning' 
+        i = 4;
+    case 'Notice'
+        i = 5;
+    case 'Info' 
+        i = 6;
+    case 'Debug'
+        i = 7; 
+    otherwise
+        i = 6;
+end
+end
 function [trn tst]=divideset(x,options)
 %DIVIDESET Divides a set of time series into two parts.
 %   DIVIDESET(X,OPTIONS) divides the dataset X into training (X) and testing
@@ -191,7 +245,11 @@ m = size(y,1);
 [yIdx xIdx] = meshgrid(1:m,1:n);
 alldistances = zeros(1,n*m);
 
-for i = 1 : n*m
+% It may seem awkward not to use two inner loops for a simple
+% 1-NN classifier. The reason is that I should use just one loop 
+% to easily share the jobs. The need is evident
+% if the number of available processors are more than max(n,m).
+parfor i = 1 : n*m
         yObject = y(yIdx(i),2:end);
         xObject = x(xIdx(i),2:end);
         switch options.alignment
@@ -201,14 +259,43 @@ for i = 1 : n*m
                 distance = dtwalignment(xObject,yObject,options);
             case 'CDTW'
                 distance = cdtwalignment(xObject,yObject,options);
+            case 'SAGA'
+                distance = sagaalignment(xObject,yObject,options);
             otherwise
                 distance = sqrt(sum((xObject - yObject).^2));
         end
         alldistances(i) = distance;
+        displine('Debug',sprintf('[%5d of %5d] dist(%4d,%4d)',i,n*m,yIdx(i),xIdx(i)),...
+            sprintf('%f',distance),options);
 end
     
 [mindistances mindistanceIdx]=min(reshape(alldistances,n,m));
 labels = xlabels(mindistanceIdx);
+end
+
+
+function [distance path1 path2] = sagaalignment(x,y,options)
+%SAGAALIGNMENT Signal Alignment via Genetic Algorithm
+%   [DISTANCE PATH1 PATH2]=SAGAALIGNMENT(X,Y,OPTIONS) aligns
+%   the objects X and Y using available options OPTIONS and returns
+%   the distance in DISTANCE and warping paths in PATH1 and PATH2.
+        gaoptions = gaoptimset('Generations',200,...
+            'TolFun', eps, ...
+            'StallGenLimit',40,...
+            'Display','off',...
+            'PopulationSize',20,...
+            'PopInitRange',1*[-1;1]);
+        switch options.SAGACostFcn
+            case 'Jcost0'
+                t=linspace(0,1,length(x));
+                J = @(s) norm(interp1(t,y,ramsay3(t,s))-x);
+            case 'Jcost1'
+                J = @(s) Jcost1(y,x,s);
+            otherwise
+                t=linspace(0,1,length(x));
+                J = @(s) norm(interp1(t,y,ramsay3(t,s))-x);
+        end
+        [sbest distance]=ga(J,8,[],[],[],[],-30,10,[],gaoptions);
 end
 
 function [distance path1 path2] = dtwalignment(x,y,options)
@@ -309,5 +396,83 @@ perf.kappa = kappa;
 perf.Z = Z;
 perf.confmat = confmat;
 perf.confmatdisplay = confmatdisplay;
+
+end
+
+function [u c d] = ramsay3(t,w)
+% Solution of ODE for a piecewise defined weight
+% function
+% t 1 x n : evaluation points
+% w 1 x m : curvatures
+% out:
+% u 1 x n : values on t
+% c 1 x m : Coefficients: c
+% d 1 x m : Coefficients: d
+
+m = length(w);
+n = length(t);
+
+A = zeros(2*m,2*m);
+y = zeros(2*m,1);
+u = zeros(1,n);
+b = linspace(0,1,m+1);
+
+% If the variables are off limits then
+% we correct the variables.
+w(w<-30) = -30;
+w(w>10)  = 10;
+
+eps = 0.001;
+for i=1:m-1
+    if abs(w(i)) < eps
+        A(i,i)     = b(i+1); % ok
+        A(i+m-1,i) = 1;  %ok
+    else
+        A(i,i)     = exp(w(i)*b(i+1)); % ok
+        A(i+m-1,i) = w(i)*exp(w(i)*b(i+1)); %ok
+    end
+    
+    if abs(w(i+1)) < eps
+        A(i,i+1)     = -b(i+1); %ok
+        A(i+m-1,i+1) = -1; %ok
+    else
+        A(i,i+1)     = -exp(w(i+1)*b(i+1)); %ok
+        A(i+m-1,i+1) = -w(i+1)*exp(w(i+1)*b(i+1)); %ok
+    end
+    
+    A(i,m+i) = 1; %ok
+    A(i,m+i+1) = -1; %ok
+end
+
+if abs(w(1)) > eps
+    A(2*m-1,1) = 1; % ok
+end
+A(2*m-1,m+1)=1; % ok
+if abs(w(m)) < eps
+    A(2*m,m) = 1; %ok
+else
+    A(2*m,m) = exp(w(m)); %ok
+end
+A(2*m,2*m)=1;
+
+%fprintf('rcond: %e min: %8.2f max %8.2f\n',rcond(A),min(w),max(w));
+% Right hand side of Ax=y
+y(2*m) = 1;
+
+x = (A\y); % solution of Ax=y
+c = x(1:m)';
+d = x(m+1:2*m)';
+
+for i=1:m
+    idx = find(t >= b(i) & t <= b(i+1));
+    if abs(w(i)) < eps
+        u(idx) = c(i)*t(idx)+d(i);
+    else
+        u(idx) = c(i)*exp(w(i)*t(idx))+d(i);
+    end
+end
+u(1) = 0;
+u(end) = 1;
+
 
 end

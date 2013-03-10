@@ -14,7 +14,7 @@
 \usepackage{booktabs}
 %\renewcommand{\thesubfigure}{\arabic{subfigure}}
 
-\title{Time Series Classification Utility v1.0\\
+\title{Time Series Classification Utility\\
 User Manual} 
 \author{H\"useyin Kaya}
 
@@ -128,14 +128,21 @@ Time elapsed (sec).......................: 5.77
 
 \section{Options}
 
-\subsection{\texttt{'alignment'}} 
+\subsection{\texttt{'Alignment'}} 
 This option specifies the alignment algorithm used in distance calculation between any two time series. The following option are available.
 \subparagraph*{\texttt{'None'}} {\it (default)} In this case no alignment takes place and usual Euclidean distance between two time series is taken as the distance.
 \subparagraph*{\texttt{'DTW'}} Standard Dynamic Time Warping is used in its original simple form without any lower bounding or bands. The implementation is based on The UCR Suite\footnote{http://www.cs.ucr.edu/\%7Eeamonn/UCRsuite.html}. The code is written as a MATLAB MEX file to gain some speed. However one should compile the mex file {\it dtw.c} to be able to use it in TSCU. 
 \subparagraph*{\texttt{'CDTW'}} Constrained Dynamic Time Warping in which the path is constrained in Sakoe-Chiba band. It is implemented again in the same mex file {\it dtw.c} however one should use the additional option \texttt{'DTWbandwidth'} to set the width of the band.
+\subparagraph*{\texttt{'SAGA'}} Signal Alignment via Genetic Algorithm. It uses smooth monotone functions suggested by Ramsay\cite{Ramsay1998}, but solves the best parameter set by using Genetic Algorithm\cite{Kaya2013113}. It is more accurate but slower than others.
 
 \subsection{\texttt{'DTWbandwidth'}} 
 \subparagraph*{$6$} {\it default} This parameter is used when one choose \texttt{'CDTW'} as the alignment method. It is the width of the Sakoe-Chiba band defined in percentage. Setting it to $100$ is the same effect as running DTW.
+
+\subsection{\texttt{'LogLevel'}}
+There are eight log levels whose range starts from ``absolute silence'' to ``display everything'': \texttt{'Emergency'}, \texttt{'Alert'}, \texttt{'Critical'}, \texttt{'Error'}, \texttt{'Warning'}, \texttt{'Notice'}, \texttt{'Info'} ({\it default}),and \texttt{'Debug'}.  
+
+\subsection{\texttt{'MATLABPool'}}
+
 
 \section{Examples}
 In order to classify synthetic control dataset with default options you can use the following commands provided that you first downloaded the dataset:
@@ -153,5 +160,12 @@ choose good old Dynamic Time Warping method. In order use constrained DTW, you c
 \begin{verbatim}
 tscu(trn,tst,'alignment','CDTW','DTWbandwidth',6)
 \end{verbatim}
+
+\section{Known issues}
+\begin{itemize}
+\item TSCU can not use multi-channel time series. However, one can first reduce the number of channels to a single channel by using straightforward technique of summing the channels or by using some other dimensional reduction algorithms. Choosing the right approach really depends on the application, so I didn't implement such methods in TSCU. Channel reduction is left to the responsibility of the user.
+\end{itemize}
+\bibliographystyle{unsrt}
+\bibliography{references}
 
 \end{document}
