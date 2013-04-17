@@ -3,19 +3,74 @@ function out = tscu(x,y,varargin)
 %   TSCU(X) first divides the set X into training and testing set
 %   randomly, then classifies the time series in testing set by using
 %   the time series in training set  with default classification
-%   method (1-NN) and distance metric (Euclidean). Rows of X
-%   corresponds to the time series. First column is the labels of
-%   integer.
+%   method (K-NN) and distance metric (Euclidean). Rows of X
+%   corresponds to the time series. First column define the labels of
+%   integer type.
 %
 %   TSCU(X,Y) classifies the time series in testing set Y by using
 %   the time series in training set X with default classification
-%   method (1-NN) and distance metric (Euclidean). Rows of both X and Y
+%   method (K-NN) and distance metric (Euclidean). Rows of both X and Y
 %   corresponds to the time series in training and testing sets,
 %   respectively. First column of both X and Y should be labels of
 %   integer.
 %
 %   TSCU(X,Y,'option1',value1,'option2',value2,...) classifies 
 %   the time series in Y by using training set X by using the options. 
+%   Available options are:
+%
+%   'Classifier': The preferrred classification technique
+%    'K-NN'   : K Nearest Neighbor
+%    default  : 'K-NN'
+%
+%   'Alignment': Alignment method
+%    'None'   : no alignment
+%    'DTW'    : Dynamic Time Warping
+%    'CDTW'   : Constained Time Warping
+%    'SAGA'   : Signal Alignment via Genetic Algorithm
+%    default  : 'None'
+%
+%   'LogLevel': Log level
+%    'Emergency'  : (level 0)
+%    'Alert'      : (level 1)
+%    'Critical'   : (level 2)
+%    'Error'      : (level 3)
+%    'Warning'    : (level 4)
+%    'Notice'     : (level 5)
+%    'Info'       : (level 6) 
+%    'Debug'      : (level 7)
+%    default      : 'Info'
+%
+%   'SAGACostFunction': Cost function used in SAGA
+%    'Jcost0'     : Euclidean distance of x to y(w(t))
+%    'Jcost1'     : MEX counterpart of Jcost0
+%    default      : 'Jcost0'
+%
+%   'SAGAOptimizationMethod': Optimization technique used in SAGA
+%    'GA'         : Genetic Algorithm
+%    'Simplex'    : Nelder-Mead Simplex method (fminsearch of MATLAB)
+%    default      : 'GA'
+%
+%   'SAGABaseLength': The number of B-spline bases in ODE
+%    default      : 8
+%
+%   'SAGAInitialSolution': Initial solution in SAGA
+%    default      : zero vector with length SAGABaseLength.
+%
+%   'MATLABPool': MATLAB pool used for parallel computing
+%    default : '' no pool for parallel computing.
+%   
+%   'reportLineWidth': Line width of report lines. Actually it defines
+%    the width of the first part of the lines.
+%    default = 60
+%
+%   trainingRatio: Ratios of training set to the whole set of training
+%    and testing. Defined between (0,1).
+%    default : 0.30
+%
+%   'DisplayInputData': Display both training and testing data
+%    'yes'          : plot the data, please!
+%    'no'           : don't bother!
+%    default : 'yes'
 %
 %   Z = TSCU(...) returns output values in the structure Z.
 %
@@ -49,8 +104,14 @@ else
                 options.loglevel = varargin{i+1};
             case 'MATLABPool'
                 options.MATLABPool = varargin{i+1};
-            case 'SAGACostFcn'
-                options.SAGACostFcn = varargin{i+1};
+            case 'SAGACostFunction'
+                options.SAGACostFunction = varargin{i+1};
+            case 'SAGAOptimizationMethod'
+                options.SAGAOptimizationMethod = varargin{i+1};
+            case 'SAGABaseLength'
+                options.SAGABaseLength = varargin{i+1};
+            case 'SAGAInitialSolution'
+                options.SAGAInitialSolution = varargin{i+1};
         end
     end
 end
@@ -58,8 +119,12 @@ end
 % Opening MATLAB pool
 if ~isempty(options.MATLABPool)
     displine('Info','Setting parallel processing','',options);
-    matlabpool close
+    matlabpool close force
     matlabpool('open',options.MATLABPool);
+end
+
+if options.SAGABaseLength ~= length(options.SAGAInitialSolution)
+    displine('Warning','Size of initial solution should be',sprintf('%d',length(options.SAGABaseLength)),options);
 end
 
 % Display some debug
@@ -68,15 +133,25 @@ displine('Info','Size of testing set',sprintf('%d',size(y,1)),options);
 displine('Info','Time series length',sprintf('%d',size(x,2)-1),options);
 displine('Info','Classification method',options.classifier,options);
 displine('Info','Alignment method',options.alignment,options);
+
+if strcmp(options.alignment,'SAGA')
+    displine('Info','SAGA number of spline bases',sprintf('%d',options.SAGABaseLength),options);
+    displine('Info','SAGA optimization method',options.SAGAOptimizationMethod,options);
+    displine('Info','SAGA initial solution',...
+        sprintf('%5.2f ',options.SAGAInitialSolution),options);
+    displine('Info','SAGA cost function',options.SAGACostFunction,options);
+end
 if strcmp(options.alignment,'CDTW')
     displine('Info','DTW band width (%)',sprintf('%5.2f',options.DTWbandwidth),options);
 end
-displine('Info','MATLAB Pool',options.MATLABPool,options);
-displine('Info','SAGA cost function',options.SAGACostFcn,options);
+if ~isempty(options.MATLABPool)
+    displine('Info','MATLAB Pool',options.MATLABPool,options);
+end
+
 
 % Classification
 switch options.classifier
-    case '1-NN'
+    case 'K-NN'
         labels = nnclassifier(x,y,options);
     otherwise
         labels = nnclassifier(x,y,options);
@@ -91,7 +166,7 @@ displine('Info','Producer Accuracy',sprintf('%-8.3f',perf.PA),options);
 displine('Info','User Accuracy',sprintf('%-8.3f',perf.UA),options);
 displine('Info','Kappa',sprintf('%-8.3f',perf.kappa),options);
 displine('Info','Z-value',sprintf('%-8.3f',perf.Z),options);
-displine('Debug','Confusion matrix',sprintf('\n%s',perf.confmatdisplay),options);
+displine('Info','Confusion matrix',sprintf('\n%s',perf.confmatdisplay),options);
 displine('Info','Time elapsed (sec)',sprintf('%-8.2f',toc),options);
 
 % Returning output
@@ -100,54 +175,19 @@ end
 
 
 function options = getOptions(varargin)
-% Available options are:
-%
-% Classifier: The preferrred classification technique
-%   '1-NN'   : 1 Nearest Neighbor
-%   default  : '1-NN'
-%
-% Alignment: Alignment method
-%   'None'   : no alignment
-%   'DTW'    : Dynamic Time Warping
-%   'CDTW'   : Constained Time Warping
-%   'SAGA'   : Signal Alignment via Genetic Algorithm
-%   default  : 'None'
-%
-% LogLevel: Log level
-%   'Emergency'  : (level 0)
-%   'Alert'      : (level 1)
-%   'Critical'   : (level 2)
-%   'Error'      : (level 3)
-%   'Warning'    : (level 4)
-%   'Notice'     : (level 5)
-%   'Info'       : (level 6) 
-%   'Debug'      : (level 7)
-%   default      : 'Info'
-%
-% SAGACostFcn: Cost function used in SAGA
-%   'Jcost0'     : MATLAB, interp1
-%   'Jcost1'     : MEX, LAPACK,
-%   default      : 'Jcost0'
-%
-% MATLABPool: MATLAB pool used for parallel computing
-%   default : '' no pool for parallel computing.
-%   
-% reportLineWidth: Line width of report lines. Actually it defines
-%   the width of the first part of the lines.
-%   default = 60
-%
-% trainingRatio: Ratios of training set to the whole set of training
-%   and testing. Defined between (0,1).
-%   default = 0.30
+% Please see help tscu for available options.
 
-options.classifier          = '1-NN';
-options.alignment           = 'None';
-options.loglevel            = 'Info';
-options.reportLineWidth     = 40;
-options.trainingRatio       = 0.3;
-options.DTWbandwidth        = 6;
-options.MATLABPool          = '';
-options.SAGACostFcn         = 'Jcost0';
+options.classifier               = 'K-NN';
+options.alignment                = 'None';
+options.loglevel                 = 'Info';
+options.reportLineWidth          = 40;
+options.trainingRatio            = 0.3;
+options.DTWbandwidth             = 6;
+options.MATLABPool               = '';
+options.SAGACostFunction        = 'Jcost0';
+options.SAGAOptimizationMethod  = 'GA';
+options.SAGABaseLength          = 8;
+options.SAGAInitialSolution     = zeros(1,options.SAGABaseLength);
 
 if nargin > 0 && mod(nargin,2) ~= 0
     error('tscu:invalidoption','The number of input variables must be even');
@@ -167,11 +207,12 @@ function displine(l,k,v,o)
 %   See options.loglevel setting.
 
 if getloglevelindex(l) <= getloglevelindex(o.loglevel)
-    fprintf('%s',k);
+    out=sprintf('%s',k);
     for i=length(k):o.reportLineWidth
-        fprintf('.');
+        out=sprintf('%s.',out);
     end
-    fprintf(': %s\n',v);
+    out=sprintf('%s: %s',out,v);
+    fprintf('%s\r',out)
 end
 end
 
@@ -246,7 +287,7 @@ m = size(y,1);
 alldistances = zeros(1,n*m);
 
 % It may seem awkward not to use two inner loops for a simple
-% 1-NN classifier. The reason is that I should use just one loop 
+% K-NN classifier. The reason is that I should use just one loop 
 % to easily share the jobs. The need is evident
 % if the number of available processors are more than max(n,m).
 parfor i = 1 : n*m
@@ -254,19 +295,18 @@ parfor i = 1 : n*m
         xObject = x(xIdx(i),2:end);
         switch options.alignment
             case 'None'
-                distance = sqrt(sum((xObject - yObject).^2)); 
+                alldistances(i) = sqrt(sum((xObject - yObject).^2)); 
             case 'DTW'
-                distance = dtwalignment(xObject,yObject,options);
+                alldistances(i) = dtwalignment(xObject,yObject,options);
             case 'CDTW'
-                distance = cdtwalignment(xObject,yObject,options);
+                alldistances(i) = cdtwalignment(xObject,yObject,options);
             case 'SAGA'
-                distance = sagaalignment(xObject,yObject,options);
+                alldistances(i) = sagaalignment(xObject,yObject,options);
             otherwise
-                distance = sqrt(sum((xObject - yObject).^2));
+                alldistances(i) = sqrt(sum((xObject - yObject).^2));
         end
-        alldistances(i) = distance;
         displine('Debug',sprintf('[%5d of %5d] dist(%4d,%4d)',i,n*m,yIdx(i),xIdx(i)),...
-            sprintf('%f',distance),options);
+            sprintf('%f',alldistances(i)),options);
 end
     
 [mindistances mindistanceIdx]=min(reshape(alldistances,n,m));
@@ -279,23 +319,37 @@ function [distance path1 path2] = sagaalignment(x,y,options)
 %   [DISTANCE PATH1 PATH2]=SAGAALIGNMENT(X,Y,OPTIONS) aligns
 %   the objects X and Y using available options OPTIONS and returns
 %   the distance in DISTANCE and warping paths in PATH1 and PATH2.
-        gaoptions = gaoptimset('Generations',200,...
-            'TolFun', eps, ...
-            'StallGenLimit',40,...
-            'Display','off',...
-            'PopulationSize',20,...
-            'PopInitRange',1*[-1;1]);
-        switch options.SAGACostFcn
+
+        switch options.SAGACostFunction
             case 'Jcost0'
                 t=linspace(0,1,length(x));
-                J = @(s) norm(interp1(t,y,ramsay3(t,s))-x);
+                J = @(s) norm(interp1(t,y,ramsay(t,s))-x);
             case 'Jcost1'
                 J = @(s) Jcost1(y,x,s);
             otherwise
+                displine('Warning',sprintf('Cost function "%s" is not defined. Using default.',...
+                    options.SAGACostFunction),options);
                 t=linspace(0,1,length(x));
-                J = @(s) norm(interp1(t,y,ramsay3(t,s))-x);
+                J = @(s) norm(interp1(t,y,ramsay(t,s))-x);
         end
-        [sbest distance]=ga(J,8,[],[],[],[],-30,10,[],gaoptions);
+        
+        switch options.SAGAOptimizationMethod
+            case 'GA'
+                gaoptions = gaoptimset('Generations',200,...
+                    'TolFun', eps, ...
+                    'StallGenLimit',40,...
+                    'Display','off',...
+                    'PopulationSize',20,...
+                    'PopInitRange',1*[-1;1]);
+                [sbest distance]=ga(J,options.SAGABaseLength,[],[],[],[],-30,10,[],gaoptions);
+            case 'Simplex'
+                [sbest distance] = fminsearch(J,options.SAGAInitialSolution);
+            otherwise
+                displine('Warning',sprintf('Optimization function "%s" is not defined. Using default.',...
+                    options.SAGAOptimizationMethod),options);
+                displine('Warning','Using Genetic Algorithm instead',options);
+                [sbest distance]=ga(J,options.SAGABaseLength);
+        end
 end
 
 function [distance path1 path2] = dtwalignment(x,y,options)
@@ -399,80 +453,3 @@ perf.confmatdisplay = confmatdisplay;
 
 end
 
-function [u c d] = ramsay3(t,w)
-% Solution of ODE for a piecewise defined weight
-% function
-% t 1 x n : evaluation points
-% w 1 x m : curvatures
-% out:
-% u 1 x n : values on t
-% c 1 x m : Coefficients: c
-% d 1 x m : Coefficients: d
-
-m = length(w);
-n = length(t);
-
-A = zeros(2*m,2*m);
-y = zeros(2*m,1);
-u = zeros(1,n);
-b = linspace(0,1,m+1);
-
-% If the variables are off limits then
-% we correct the variables.
-w(w<-30) = -30;
-w(w>10)  = 10;
-
-eps = 0.001;
-for i=1:m-1
-    if abs(w(i)) < eps
-        A(i,i)     = b(i+1); % ok
-        A(i+m-1,i) = 1;  %ok
-    else
-        A(i,i)     = exp(w(i)*b(i+1)); % ok
-        A(i+m-1,i) = w(i)*exp(w(i)*b(i+1)); %ok
-    end
-    
-    if abs(w(i+1)) < eps
-        A(i,i+1)     = -b(i+1); %ok
-        A(i+m-1,i+1) = -1; %ok
-    else
-        A(i,i+1)     = -exp(w(i+1)*b(i+1)); %ok
-        A(i+m-1,i+1) = -w(i+1)*exp(w(i+1)*b(i+1)); %ok
-    end
-    
-    A(i,m+i) = 1; %ok
-    A(i,m+i+1) = -1; %ok
-end
-
-if abs(w(1)) > eps
-    A(2*m-1,1) = 1; % ok
-end
-A(2*m-1,m+1)=1; % ok
-if abs(w(m)) < eps
-    A(2*m,m) = 1; %ok
-else
-    A(2*m,m) = exp(w(m)); %ok
-end
-A(2*m,2*m)=1;
-
-%fprintf('rcond: %e min: %8.2f max %8.2f\n',rcond(A),min(w),max(w));
-% Right hand side of Ax=y
-y(2*m) = 1;
-
-x = (A\y); % solution of Ax=y
-c = x(1:m)';
-d = x(m+1:2*m)';
-
-for i=1:m
-    idx = find(t >= b(i) & t <= b(i+1));
-    if abs(w(i)) < eps
-        u(idx) = c(i)*t(idx)+d(i);
-    else
-        u(idx) = c(i)*exp(w(i)*t(idx))+d(i);
-    end
-end
-u(1) = 0;
-u(end) = 1;
-
-
-end

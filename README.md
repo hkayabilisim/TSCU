@@ -27,8 +27,6 @@ Please see http://web.itu.edu.tr/huseyinkaya/tscu and User Manual.
 
 TODO
 ====
-* Paralel computing option will be added.
-* Estimated labels should be contained in the output.
 * Optimization subroutines should be added as an option.
 
 FEATURES
@@ -36,7 +34,12 @@ FEATURES
 * Dynamic Time Warping, Constrained Dynamic Time Warping and Signal
   Alignment via Genetic Algorithm (SAGA) are available for candidate
   alignment methods.
-
+* Paralel computing option is available. You can speed-up the computation
+  if you enable it and use K-NN classifier. 
+* Classification performance measures such as user, producer accuracies, 
+  estimated labels, Kappa statistics are provided in the function output.
+* Displays input training and testing data with class labels.
 KNOWN ISSUES
 ============
 * TSCU can not use multi-channel time series. 
+* Althoug Jcost1 is MEX counterpart of Jcost0, it is still slower than Jcost0.
