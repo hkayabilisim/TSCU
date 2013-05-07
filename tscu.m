@@ -57,6 +57,8 @@ function out = tscu(x,y,varargin)
 %    default      : zero vector with length SAGABaseLength.
 %
 %   'MATLABPool': MATLAB pool used for parallel computing
+%    'local' : Set it it 'local' if you want to use the processors
+%              available in local PC.
 %    default : '' no pool for parallel computing.
 %   
 %   'reportLineWidth': Line width of report lines. Actually it defines
@@ -74,7 +76,6 @@ function out = tscu(x,y,varargin)
 %
 %   Z = TSCU(...) returns output values in the structure Z.
 %
-tic
 options = getOptions;
 if nargin == 0
     error('tscu:noinput','Not enough input arguments.');
@@ -119,7 +120,6 @@ end
 % Opening MATLAB pool
 if ~isempty(options.MATLABPool)
     displine('Info','Setting parallel processing','',options);
-    matlabpool close force
     matlabpool('open',options.MATLABPool);
 end
 
@@ -149,6 +149,7 @@ if ~isempty(options.MATLABPool)
 end
 
 
+tic
 % Classification
 switch options.classifier
     case 'K-NN'
@@ -156,7 +157,7 @@ switch options.classifier
     otherwise
         labels = nnclassifier(x,y,options);
 end
-
+classification_time = toc;
 
 % Performance
 perf = performance(y(:,1),labels);
@@ -167,7 +168,13 @@ displine('Info','User Accuracy',sprintf('%-8.3f',perf.UA),options);
 displine('Info','Kappa',sprintf('%-8.3f',perf.kappa),options);
 displine('Info','Z-value',sprintf('%-8.3f',perf.Z),options);
 displine('Info','Confusion matrix',sprintf('\n%s',perf.confmatdisplay),options);
-displine('Info','Time elapsed (sec)',sprintf('%-8.2f',toc),options);
+displine('Info','Classification time (sec)',sprintf('%-8.2f',classification_time),options);
+
+% Closing the MATLAB pool if paralel process
+if ~isempty(options.MATLABPool)
+    displine('Info','Setting parallel processing','',options);
+    matlabpool close
+end
 
 % Returning output
 out.labels = labels;
@@ -212,7 +219,7 @@ if getloglevelindex(l) <= getloglevelindex(o.loglevel)
         out=sprintf('%s.',out);
     end
     out=sprintf('%s: %s',out,v);
-    fprintf('%s\r',out)
+    fprintf('%s\n',out)
 end
 end
 

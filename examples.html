@@ -32,57 +32,13 @@
 			<div class="content">
 				<h1>Examples</h1>
 				<div class="body">
-					<ul>
-						<li>First of all, please download synthetic control dataset from <a href="http://www.cs.ucr.edu/~eamonn/time_series_data/">UCR time series repository</a>. It is provided as free. You can also request the rest of the dataset from Eamonn Keogh.</li>
-						<li>Assuming you downloadaed the training and testing set, you should first load the dataset as follows:
-						<blockquote>
-							trn=load('synthetic_control_TRAIN');
-							tst=load('synthetic_control_TEST');
-						</blockquote>
-						You can then classify the time series in the testing set by using the default options as follows:
-						<blockquote>
-							tscu(trn,tst)
-						</blockquote>
-						The command above will create the following output:
-<pre>
-Size of training set.....................: 300
-Size of testing set......................: 300
-Time series length.......................: 60
-Classification method....................: 1-NN
-Alignment method.........................: None
-Overall Accuracy.........................: 0.880   
-Overall Error............................: 0.120   
-Producer Accuracy........................: 0.440   1.000   0.980   1.000   0.940   0.920   
-User Accuracy............................: 1.000   0.833   0.891   0.862   0.887   0.885   
-Kappa....................................: 0.856   
-Z-value..................................: 5.439   
-Confusion matrix
-          1     2     3     4     5     6    UA    TO 
-    1    22     0     0     0     0     0 1.000    22 
-    2    10    50     0     0     0     0 0.833    60 
-    3     3     0    49     0     3     0 0.891    55 
-    4     4     0     0    50     0     4 0.862    58 
-    5     5     0     1     0    47     0 0.887    53 
-    6     6     0     0     0     0    46 0.885    52 
-   PA 0.440 1.000 0.980 1.000 0.940 0.920 
-   TO    50    50    50    50    50    50         300 
-Time elapsed (sec).......................: 1.17 
-</pre></li>
-						<li>If you want to use Dynamic Time Warping then you should append 'alignment' option as follows: 
-						<blockquote>
-							tscu(trn,tst,'alignment','DTW')
-						</blockquote></li>
-						<li>You can also use Constrained Dynamic Time Warping by using 'CDTW' option as follows:	
-						<blockquote>
-							tscu(trn,tst,'alignment','CDTW')
-						</blockquote>
-						In this case, band width is taken as 6% by default. </li>
-						<li>If you want to change also the band width than you can use 'DTWbandwidth' option:
-						<blockquote>
-							tscu(trn,tst,'alignment','CDTW','DTWbandwidth',10)
-						</blockquote></li>
+						<h2><a href="html/tscu_test01.html">tscu_test01.m</a></h2>
+							<p>Synthetic Control Dataset with default options. </p>
+						<h2><a href="html/tscu_test02.html">tscu_test02.m</a></h2>
+							<p>Same as test01 but with alignment..</p>
+						<h2><a href="html/tscu_test03.html">tscu_test03.m</a></h2>
+							<p>Same as test02 but with alignment..</p>
 
-					</ul>
 				</div>
 			</div>
 		</div>
@@ -97,13 +53,13 @@ Time elapsed (sec).......................: 1.17
 			<li><a href="examples.html">examples</a></li>
 		</ul>
 
+<!--
 		<h1>Alignment</h1>
 		<ul>
 			<li><a href="dtw.html">DTW</a></li>
 			<li><a href="cdtw.html">Constrained DTW</a></li>
 			<li><a href="saga.html">SAGA</a></li>
 		</ul>
-
 		<h1>Classification</h1>
 		<ul>
 			<li><a href="1-NN.html">1-NN</a></li>
@@ -114,6 +70,7 @@ Time elapsed (sec).......................: 1.17
 			<li><a href="UCR.html">UCR</a></li>
 			<li><a href="UCI.html">UCI</a></li>
 		</ul>
+-->
 	</div>
 	
 	<div class="clearer"><span></span></div>
