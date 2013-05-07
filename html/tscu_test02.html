@@ -1,0 +1,153 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Time Series Classification Utility (TSCU) test suite.</title><meta name="generator" content="MATLAB 8.0"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-05-06"><meta name="DC.source" content="tscu_test02.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>Time Series Classification Utility (TSCU) test suite.</h1><!--introduction--><p>This test is to demonstrate the effect of alignment in classification accuracy.</p><div><ul><li>Author : Huseyin Kaya</li><li>Website: <a href="http://web.itu.edu.tr/huseyinkaya/tscu">http://web.itu.edu.tr/huseyinkaya/tscu</a></li><li>Sources: <a href="https://github.com/hkayabilisim/TSCU">https://github.com/hkayabilisim/TSCU</a></li></ul></div><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Loading data</a></li><li><a href="#2">Without alignment</a></li><li><a href="#3">With alignment</a></li></ul></div><h2>Loading data<a name="1"></a></h2><p>I'm using Synthetic Control dataset downloaded from UCR Time Series web site (<a href="http://www.cs.ucr.edu/~eamonn/time_series_data/">http://www.cs.ucr.edu/~eamonn/time_series_data/</a>). You should find files in the TSCU distribution. If not, then go ahead and download them from UCR web site.</p><pre class="codeinput">trn=load(<span class="string">'synthetic_control_TRAIN'</span>);
+tst=load(<span class="string">'synthetic_control_TEST'</span>);
+</pre><h2>Without alignment<a name="2"></a></h2><p>If one uses default options, then the overall accuracy for synthetic control dataset is 0.88.</p><pre class="codeinput">tscu(trn,tst);
+</pre><pre class="codeoutput">Size of training set.....................: 300
+Size of testing set......................: 300
+Time series length.......................: 60
+Classification method....................: K-NN
+Alignment method.........................: None
+Overall Accuracy.........................: 0.880   
+Overall Error............................: 0.120   
+Producer Accuracy........................: 0.440   1.000   0.980   1.000   0.940   0.920   
+User Accuracy............................: 1.000   0.833   0.891   0.862   0.887   0.885   
+Kappa....................................: 0.856   
+Z-value..................................: 5.439   
+Confusion matrix.........................: 
+Confusion matrix
+          1     2     3     4     5     6    UA    TO 
+    1    22     0     0     0     0     0 1.000    22 
+    2    10    50     0     0     0     0 0.833    60 
+    3     3     0    49     0     3     0 0.891    55 
+    4     4     0     0    50     0     4 0.862    58 
+    5     5     0     1     0    47     0 0.887    53 
+    6     6     0     0     0     0    46 0.885    52 
+   PA 0.440 1.000 0.980 1.000 0.940 0.920 
+   TO    50    50    50    50    50    50         300 
+
+Classification time (sec)................: 9.70    
+</pre><h2>With alignment<a name="3"></a></h2><p>Now alignment is carried out by using Dynamic Time Warping (DTW) which in turn dramatically increases the classification accuracy. The new overall accuracy (0.993) is significantly better than the old accuracy. Also the cpu time is raised little bit.</p><pre class="codeinput">tscu(trn,tst,<span class="string">'Alignment'</span>,<span class="string">'DTW'</span>);
+</pre><pre class="codeoutput">Size of training set.....................: 300
+Size of testing set......................: 300
+Time series length.......................: 60
+Classification method....................: K-NN
+Alignment method.........................: DTW
+Overall Accuracy.........................: 0.993   
+Overall Error............................: 0.007   
+Producer Accuracy........................: 0.960   1.000   1.000   1.000   1.000   1.000   
+User Accuracy............................: 1.000   0.980   1.000   1.000   0.980   1.000   
+Kappa....................................: 0.992   
+Z-value..................................: 24.884  
+Confusion matrix.........................: 
+Confusion matrix
+          1     2     3     4     5     6    UA    TO 
+    1    48     0     0     0     0     0 1.000    48 
+    2     1    50     0     0     0     0 0.980    51 
+    3     0     0    50     0     0     0 1.000    50 
+    4     0     0     0    50     0     0 1.000    50 
+    5     1     0     0     0    50     0 0.980    51 
+    6     0     0     0     0     0    50 1.000    50 
+   PA 0.960 1.000 1.000 1.000 1.000 1.000 
+   TO    50    50    50    50    50    50         300 
+
+Classification time (sec)................: 14.57   
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2012b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Time Series Classification Utility (TSCU) test suite.
+%
+% This test is to demonstrate the effect of alignment
+% in classification accuracy.
+%
+% * Author : Huseyin Kaya
+% * Website: <http://web.itu.edu.tr/huseyinkaya/tscu>
+% * Sources: <https://github.com/hkayabilisim/TSCU>
+
+%% Loading data
+% I'm using Synthetic Control dataset downloaded from 
+% UCR Time Series web site 
+% (<http://www.cs.ucr.edu/~eamonn/time_series_data/>). 
+% You should find files in the TSCU distribution. 
+% If not, then go ahead and download them from UCR web site.
+trn=load('synthetic_control_TRAIN');
+tst=load('synthetic_control_TEST');
+
+%% Without alignment
+% If one uses default options, then the overall accuracy for
+% synthetic control dataset is 0.88.
+tscu(trn,tst);
+
+%% With alignment
+% Now alignment is carried out by using Dynamic Time Warping (DTW) 
+% which in turn dramatically increases the classification accuracy.
+% The new overall accuracy (0.993) is significantly better than the old 
+% accuracy. Also the cpu time is raised little bit.
+tscu(trn,tst,'Alignment','DTW');
+
+##### SOURCE END #####
+--></body></html>
