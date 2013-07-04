@@ -1,0 +1,26 @@
+\begin{thebibliography}{1}
+
+\bibitem{UCRWeb}
+Keogh E., Zhu Q., Hu~B., Hao Y., Xi~X., Wei L., and Ratanamahatana~C. A.
+\newblock The ucr time series classification/clustering homepage:.
+\newblock Last checked on 4 Feb 2013.
+
+\bibitem{Ramsay1998}
+J.~O. Ramsay and X.~C. Li.
+\newblock {Curve registration}.
+\newblock {\em {Journal of the Royal Statistical Society Series B-statistical
+  Methodology}}, {60}({Part 2}):{351--363}, {1998}.
+
+\bibitem{Kaya2013113}
+H{\"u}seyin Kaya and {\c S}ule G{\"u}nd{\"u}z-{\"O}{\u g}{\"u}d{\"u}c{\"u}.
+\newblock Saga: A novel signal alignment method based on genetic algorithm.
+\newblock {\em Information Sciences}, 228(0):113 -- 130, 2013.
+
+\bibitem{Lagarias1998}
+JC~Lagarias, JA~Reeds, MH~Wright, and PE~Wright.
+\newblock {Convergence properties of the Nelder-Mead simplex method in low
+  dimensions}.
+\newblock {\em {SIAM JOURNAL ON OPTIMIZATION}}, {9}({1}):{112--147}, {DEC 21}
+  {1998}.
+
+\end{thebibliography}

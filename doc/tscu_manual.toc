@@ -1,0 +1,16 @@
+\contentsline {section}{\numberline {1}Introduction}{1}
+\contentsline {section}{\numberline {2}Installation}{2}
+\contentsline {section}{\numberline {3}Running}{3}
+\contentsline {section}{\numberline {4}Options}{4}
+\contentsline {subsection}{\numberline {4.1}\texttt {'Classifier'}}{4}
+\contentsline {subsection}{\numberline {4.2}\texttt {'Alignment'}}{4}
+\contentsline {subsection}{\numberline {4.3}\texttt {'DTWbandwidth'}}{5}
+\contentsline {subsection}{\numberline {4.4}\texttt {'SAGACostFunction'}}{5}
+\contentsline {subsection}{\numberline {4.5}\texttt {'SAGAInitialSolution'}}{6}
+\contentsline {subsection}{\numberline {4.6}\texttt {'SAGABaseLength'}}{6}
+\contentsline {subsection}{\numberline {4.7}\texttt {'LogLevel'}}{6}
+\contentsline {subsection}{\numberline {4.8}\texttt {'MATLABPool'}}{6}
+\contentsline {subsection}{\numberline {4.9}\texttt {'DisplayInputData'}}{6}
+\contentsline {subsection}{\numberline {4.10}\texttt {'trainingRatio'}}{6}
+\contentsline {section}{\numberline {5}Examples}{6}
+\contentsline {section}{\numberline {6}Known issues}{7}
