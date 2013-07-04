@@ -45,4 +45,10 @@ FEATURES
 KNOWN ISSUES
 ============
 * TSCU can not use multi-channel time series. 
-* Althoug Jcost1 is MEX counterpart of Jcost0, it is still slower than Jcost0.
+* Althoug Jcost1 is MEX counterpart of Jcost0, it is still slower than Jcost0
+  if 'SAGAOptimizationMethod' is 'Simplex'.
+
+CHANGE LOG
+==========
+* Jcost0 now accepts the time variable (t). Making time discretization 
+  outside of Jcost0 makes it approximately 5% faster. 2013-07-03
