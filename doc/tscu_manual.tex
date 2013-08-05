@@ -6,18 +6,15 @@
 \usepackage{amssymb}
 \usepackage[config, labelfont=scriptsize, textfont=scriptsize]{subfig}
 \newcommand{\B}[1]{\boldsymbol{#1}}
-\newtheorem{theorem}{Theorem}
-\newtheorem{remark}{Remark}
 \usepackage{amsmath,epsfig}
 \usepackage{eqparbox}
 \usepackage{multirow}
 \usepackage{booktabs}
 \usepackage{algpseudocode}
 \usepackage{algorithm}
-%\renewcommand{\thesubfigure}{\arabic{subfigure}}
+\graphicspath{ {./figs/} }
 
-\title{Time Series Classification Utility\\
-User Manual} 
+\title{Time Series Classification Utility\\ User Manual} 
 \author{H\"useyin Kaya}
 
 \begin{document}
@@ -66,19 +63,17 @@ There is no significant performance gain if you choose to use the Accelaration f
 another alternative would be to use ATLAS which I haven't tried yet. 
 \end{itemize}
 
-
-
 \section{Running}
 A straightforward way yo to test the installation is to run a few tasks. Let's start with the Synthetic Control dataset from University of California-Riverside (UCR) time series repository. This dataset is freely available on UCR time repository web page\footnote{http://www.cs.ucr.edu/~eamonn/time\_series\_data/.}. There are $6$ different classes of time series each has length $60$. There are totally $600$ time series half of it is reversed for training. Some examples of the dataset are displayed in Figure~\ref{fig_synthetic}.
 
 	\begin{figure}[!h]
 	\centering
-	\subfloat[normal]{\includegraphics[width=0.33\textwidth]{../Experiment59-synthetic-control-01.pdf}}%
-	\subfloat[cyclic]{\includegraphics[width=0.33\textwidth]{../Experiment59-synthetic-control-02.pdf}}%
-	\subfloat[increasing trend]{\includegraphics[width=0.33\textwidth]{../Experiment59-synthetic-control-03.pdf}}\\%
-	\subfloat[decreasing trend]{\includegraphics[width=0.33\textwidth]{../Experiment59-synthetic-control-04.pdf}}%
-	\subfloat[upward shift]{\includegraphics[width=0.33\textwidth]{../Experiment59-synthetic-control-05.pdf}}%
-	\subfloat[downward shift]{\includegraphics[width=0.33\textwidth]{../Experiment59-synthetic-control-06.pdf}}%
+	\subfloat[normal]{\includegraphics[width=0.33\textwidth]{Experiment59_synthetic_control_01.pdf}}%
+	\subfloat[cyclic]{\includegraphics[width=0.33\textwidth]{Experiment59_synthetic_control_02.pdf}}%
+	\subfloat[increasing trend]{\includegraphics[width=0.33\textwidth]{Experiment59_synthetic_control_03.pdf}}\\%
+	\subfloat[decreasing trend]{\includegraphics[width=0.33\textwidth]{Experiment59_synthetic_control_04.pdf}}%
+	\subfloat[upward shift]{\includegraphics[width=0.33\textwidth]{Experiment59_synthetic_control_05.pdf}}%
+	\subfloat[downward shift]{\includegraphics[width=0.33\textwidth]{Experiment59_synthetic_control_06.pdf}}%
 	\caption{Some examples from 6 different control charts used in the synthetic control dataset.}
 	\label{fig_synthetic}
 	\end{figure}
