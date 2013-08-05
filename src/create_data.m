@@ -46,4 +46,4 @@ subplot(224); plot(tst(tst(:,1)==2,2:end)','k'); title('2 tst');
 tscu(trn,tst,'Alignment','None');
 tscu(trn,tst,'Alignment','DTW');
 tscu(trn,tst,'Alignment','CDTW');
-tscu(trn,tst,'Alignment','SAGA','LogLevel','Debug');
+tscu(trn,tst,'Alignment','SAGA');
