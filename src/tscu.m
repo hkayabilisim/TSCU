@@ -56,6 +56,10 @@ function out = tscu(x,y,varargin)
 %   'SAGAInitialSolution': Initial solution in SAGA
 %    default      : zero vector with length SAGABaseLength.
 %
+%   'CrossValidation': An integer specifying how many time the 
+%    cross validation takes place.
+%    default      : 0 means don't do cross validation
+%
 %   'MATLABPool': MATLAB pool used for parallel computing
 %    'local' : Set it it 'local' if you want to use the processors
 %              available in local PC.
@@ -76,7 +80,8 @@ function out = tscu(x,y,varargin)
 %
 %   Z = TSCU(...) returns output values in the structure Z.
 %
-options = getOptions;
+
+options = getDefaultOptions;
 if nargin == 0
     error('tscu:noinput','Not enough input arguments.');
 elseif nargin == 1
@@ -114,6 +119,8 @@ else
                 options.SAGABaseLength = varargin{i+1};
             case 'SAGAInitialSolution'
                 options.SAGAInitialSolution = varargin{i+1};
+            case 'CrossValidation'
+                options.CrossValidation = varargin{i+1};
             case 'DisplayInputData'
 		options.DisplayInputData = varargin{i+1};    
         end
@@ -145,10 +152,17 @@ end
 displine('Info','Size of training set',sprintf('%d',size(x,1)),options);
 displine('Info','Size of testing set',sprintf('%d',size(y,1)),options);
 displine('Info','Time series length',sprintf('%d',size(x,2)-1),options);
+
 displine('Info','Classification method',options.classifier,options);
 displine('Info','Alignment method',options.alignment,options);
 displine('Info','Displaying input data',options.DisplayInputData,options);
 
+if options.CrossValidation < 1
+    displine('Info','No cross validation is chosen',...
+        sprintf('%d',options.CrossValidation),options);
+
+else
+end
 if strcmp(options.alignment,'SAGA')
     displine('Info','SAGA number of spline bases',...
      sprintf('%d',options.SAGABaseLength),options);
@@ -166,13 +180,15 @@ if ~isempty(options.MATLABPool)
     displine('Info','MATLAB Pool',options.MATLABPool,options);
 end
 
-tic
 % Displaying Input Data
 if strcmp(options.DisplayInputData,'yes')
     displayInputData(x,y,options);
 end
+displayClassInfo(x,y,options);
+
 
 % Classification
+tic
 switch options.classifier
     case 'K-NN'
         labels = nnclassifier(x,y,options);
@@ -201,6 +217,21 @@ end
 
 % Returning output
 out.labels = labels;
+displine('Info','The end of TSCU','FINISHED',options);
+end
+
+function displayClassInfo(x,y,options)
+% Display class information
+
+uniquelabels=unique([x(:,1);y(:,1)]);
+% For each class
+for i=1:length(uniquelabels)
+    trnidx = uniquelabels(i)==x(:,1); 
+    tstidx = uniquelabels(i)==y(:,1); 
+    displine('Info','Class information',...
+        sprintf('%d [TRN:%3d TST:%3d]',uniquelabels(i),sum(trnidx),sum(tstidx)),options);
+
+end
 end
 
 function displayInputData(x,y,options)
@@ -209,9 +240,11 @@ function displayInputData(x,y,options)
 uniquelabels=unique([x(:,1);y(:,1)]);
 % For each class
 for i=1:length(uniquelabels)
-    figure
     trnidx = uniquelabels(i)==x(:,1); 
     tstidx = uniquelabels(i)==y(:,1); 
+    
+    
+    figure
     subplot(121);
     plot(x(trnidx,2:end)','k');
     title(sprintf('Class index: %d [TRN:%d]',...
@@ -223,7 +256,7 @@ for i=1:length(uniquelabels)
 end
 end
 
-function options = getOptions(varargin)
+function options = getDefaultOptions(varargin)
 % Please see help tscu for available options.
 
 options.classifier               = 'K-NN';
@@ -238,6 +271,7 @@ options.SAGAOptimizationMethod  = 'GA';
 options.SAGABaseLength          = 8;
 options.SAGAInitialSolution     = zeros(1,options.SAGABaseLength);
 options.DisplayInputData        = 'no';
+options.CrossValidation         = 0;
 
 if nargin > 0 && mod(nargin,2) ~= 0
     error('tscu:invalidoption','The number of input variables must be even');
@@ -349,7 +383,7 @@ Alignment = options.alignment;
 % It may seem awkward not to use two inner loops for a simple
 % K-NN classifier. The reason is that I should use just one loop 
 % to easily distribute the job. 
-for i = 1 : n*m
+parfor i = 1 : n*m
         yObject = y(yIdx(i),2:end); 
         xObject = x(xIdx(i),2:end);
         switch Alignment
@@ -399,7 +433,7 @@ function [distance, path1, path2] = sagaalignment(x,y,options)
                     'Display','off',...
                     'PopulationSize',20,...
                     'PopInitRange',1*[-1;1]);
-                [sbest, distance]=ga(J,options.SAGABaseLength,[],[],[],[],-30,10,[],gaoptions);
+                [sbest, distance]=ga(J,options.SAGABaseLength,[],[],[],[],-10,10,[],gaoptions);
             case 'Simplex'
                 [sbest, distance] = fminsearch(J,options.SAGAInitialSolution);
             otherwise
