@@ -1,24 +1,49 @@
 %% Time Series Classification Utility (TSCU) test suite.
-%
-% The test runs TSCU with using the alignment method SAGA.
-% The data set is Synthetic Control which is provided
-% by <http://www.cs.ucr.edu/~eamonn/time_series_data Eamonn Keogh>. 
+% The test runs TSCU in default settings. 
 %
 % * Author : Huseyin Kaya
 % * Website: <http://web.itu.edu.tr/huseyinkaya/tscu>
 % * Sources: <https://github.com/hkayabilisim/TSCU>
 
-%% Loading data
-% I'm using the Synthetic Control dataset downloaded from 
-% UCR Time Series web site 
-% (<http://www.cs.ucr.edu/~eamonn/time_series_data/>).
-% The files should be in the TSCU distribution. If not, then go ahead
-% and download them from UCR web site.
-trn=load('synthetic_control_TRAIN');
-tst=load('synthetic_control_TEST');
+clear all
+close all
+clc
 
-%% Running SAGA with Jcost0
-%tscu(trn,tst,'Alignment','SAGA','SAGACostFunction','Jcost0',...
-%	     'MATLABPool','anadolu_dual_64');
-%% Running SAGA with Jcost1
-tscu(trn,tst,'Alignment','SAGA','SAGACostFunction','Jcost1')
+%% Creating a toy dataset
+% Let's create 4 time series with two different classes: 1 and 2. First
+% class represents a sine wave, whereas the later represents a cosine wave.
+% We also deviced an artifical change within the same class time series by
+% warping the time axis with w(t)=t^2.
+% 
+%
+%   Name  Function       Class
+%   a     sin(2*pi*t)    1  
+%   b     sin(2*pi*t*t)  1
+%   c     cos(2*pi*t)    2
+%   d     cos(2*pi*t*t)  2
+%
+% If you have UCR data available, then load it as following:
+%
+%   trn=load('synthetic_control_TRAIN');
+%   tst=load('synthetic_control_TEST');
+%
+t = linspace(0,1,29);
+a=sin(2*pi*t); b=sin(2*pi*t.^2);
+c=cos(2*pi*t); d=cos(2*pi*t.^2);
+tst = [ 1 a ; 2 c];
+trn = [ 1 b ; 2 d];
+
+
+
+%% Running TSCU with SAGA
+% Now let's try SAGA as an alignment algorithm. But this time we change the
+% cost function from the default Jcost0 to Jcost1. We didn't observed a big
+% difference.
+%
+% You will see three figures
+%
+% * original signals
+% * aligned signals
+% * warping between the time series.
+% * mapping between the time series.
+tscu(trn,tst,'Alignment','SAGA','DisplayAlignment',{1,1},'SAGACostFunction','Jcost1');

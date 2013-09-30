@@ -1,14 +1,41 @@
-n = 100;
-t = linspace(0,1,n);
-x = sin(t);
-y = cos(t);
+%% Time Series Classification Utility (TSCU) test suite.
+% The test runs TSCU in default settings. 
+%
+% * Author : Huseyin Kaya
+% * Website: <http://web.itu.edu.tr/huseyinkaya/tscu>
+% * Sources: <https://github.com/hkayabilisim/TSCU>
 
-m=50000;
-d = zeros(1,m);
+clear all
+close all
+clc
 
-tic
-for i=1:m
-s = -1+rand(1,8)*2;
-d(i) = Jcost1(y,x,s);
-end
-fprintf('%8f %8.2f\n',sum(d),toc);
+%% Creating a toy dataset
+% Let's create 4 time series with two different classes: 1 and 2. First
+% class represents a sine wave, whereas the later represents a cosine wave.
+% We also deviced an artifical change within the same class time series by
+% warping the time axis with w(t)=t^2.
+% 
+%
+%   Name  Function       Class
+%   a     sin(2*pi*t)    1  
+%   b     sin(2*pi*t*t)  1
+%   c     cos(2*pi*t)    2
+%   d     cos(2*pi*t*t)  2
+%
+% If you have UCR data available, then load it as following:
+%
+%   trn=load('synthetic_control_TRAIN');
+%   tst=load('synthetic_control_TEST');
+%
+t = linspace(0,1,29);
+a=sin(2*pi*t); b=sin(2*pi*t.^2);
+c=cos(2*pi*t); d=cos(2*pi*t.^2);
+tst = [ 1 a ; 2 c];
+trn = [ 1 b ; 2 d];
+
+
+
+%% Running TSCU with SAGA
+% Now let's try debug mode. This time you will see more messages. For
+% example we can see each distance in KNN calculation.
+tscu(trn,tst,'Alignment','SAGA','LogLevel','Debug');

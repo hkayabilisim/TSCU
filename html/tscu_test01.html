@@ -4,123 +4,152 @@
 <html><head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
    <!--
-This HTML was auto-generated from MATLAB code.
-To make changes, update the MATLAB code and republish this document.
-      --><title>Time Series Classification Utility (TSCU) test suite.</title><meta name="generator" content="MATLAB 8.0"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2013-05-21"><meta name="DC.source" content="tscu_test01.m"><style type="text/css">
-html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+This HTML is auto-generated from an M-file.
+To make changes, update the M-file and republish this document.
+      --><title>tscu_test01</title><meta name="generator" content="MATLAB 7.9"><meta name="date" content="2013-09-30"><meta name="m-file" content="tscu_test01"><style type="text/css">
 
-html { min-height:100%; margin-bottom:1px; }
-html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
-html body td { vertical-align:top; text-align:left; }
+body {
+  background-color: white;
+  margin:10px;
+}
 
-h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
-h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
-h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+h1 {
+  color: #990000; 
+  font-size: x-large;
+}
 
-a { color:#005fce; text-decoration:none; }
-a:hover { color:#005fce; text-decoration:underline; }
-a:visited { color:#004aa0; text-decoration:none; }
+h2 {
+  color: #990000;
+  font-size: medium;
+}
 
-p { padding:0px; margin:0px 0px 20px; }
-img { padding:0px; margin:0px 0px 20px; border:none; }
-p img, pre img, tt img, li img { margin-bottom:0px; } 
+/* Make the text shrink to fit narrow windows, but not stretch too far in 
+wide windows. */ 
+p,h1,h2,div.content div {
+  max-width: 600px;
+  /* Hack for IE6 */
+  width: auto !important; width: 600px;
+}
 
-ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
-ul li { padding:0px; margin:0px 0px 7px 0px; }
-ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
-ul li ol li { list-style:decimal; }
-ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
-ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
-ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
-ol li ol li { list-style-type:lower-alpha; }
-ol li ul { padding-top:7px; }
-ol li ul li { list-style:square; }
+pre.codeinput {
+  background: #EEEEEE;
+  padding: 10px;
+}
+@media print {
+  pre.codeinput {word-wrap:break-word; width:100%;}
+} 
 
-.content { font-size:1.2em; line-height:140%; padding: 20px; }
+span.keyword {color: #0000FF}
+span.comment {color: #228B22}
+span.string {color: #A020F0}
+span.untermstring {color: #B20000}
+span.syscmd {color: #B28C00}
 
-pre, tt, code { font-size:12px; }
-pre { margin:0px 0px 20px; }
-pre.error { color:red; }
-pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
-pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.codeoutput {
+  color: #666666;
+  padding: 10px;
+}
 
-@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+pre.error {
+  color: red;
+}
 
-span.keyword { color:#0000FF }
-span.comment { color:#228B22 }
-span.string { color:#A020F0 }
-span.untermstring { color:#B20000 }
-span.syscmd { color:#B28C00 }
+p.footer {
+  text-align: right;
+  font-size: xx-small;
+  font-weight: lighter;
+  font-style: italic;
+  color: gray;
+}
 
-.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
-.footer p { margin:0px; }
-.footer a { color:#878787; }
-.footer a:hover { color:#878787; text-decoration:underline; }
-.footer a:visited { color:#878787; }
-
-table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
-table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
-
-
-
-
-
-  </style></head><body><div class="content"><h1>Time Series Classification Utility (TSCU) test suite.</h1><!--introduction--><p>The test runs TSCU in default settings. * Author : Huseyin Kaya * Website: <a href="http://web.itu.edu.tr/huseyinkaya/tscu">http://web.itu.edu.tr/huseyinkaya/tscu</a> * Sources: <a href="https://github.com/hkayabilisim/TSCU">https://github.com/hkayabilisim/TSCU</a></p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Loading data</a></li><li><a href="#2">Displaying data</a></li><li><a href="#3">Running TSCU</a></li></ul></div><h2>Loading data<a name="1"></a></h2><p>The data set is TRACE which is available in the TSCU package. For more diverse dataset, please visit the UCR Time Series web site (<a href="http://www.cs.ucr.edu/~eamonn/time_series_data/">http://www.cs.ucr.edu/~eamonn/time_series_data/</a>).</p><pre class="codeinput">trn=load(<span class="string">'TRACE_TRAIN'</span>);
-tst=load(<span class="string">'TRACE_TEST'</span>);
-</pre><h2>Displaying data<a name="2"></a></h2><pre class="codeinput">figure;
-subplot(221); plot(trn(1:3,2:end)'); title(<span class="string">'Training / Class 1'</span>);
-subplot(222); plot(trn(4:6,2:end)'); title(<span class="string">'Training / Class 2'</span>);
-subplot(223); plot(tst(1:3,2:end)'); title(<span class="string">'Testing / Class 1'</span>);
-subplot(224); plot(tst(4:6,2:end)'); title(<span class="string">'Testing / Class 2'</span>);
-</pre><img vspace="5" hspace="5" src="tscu_test01_01.png" alt=""> <h2>Running TSCU<a name="3"></a></h2><p>TSCU is run with its defaults options. It should run in couple of seconds since the alignment is set to 'None' by default. It means standard good old friend Euclidean distance is used to measure how two time series are close to each other.</p><pre class="codeinput">tscu(trn,tst);
-</pre><pre class="codeoutput">Size of training set.....................: 6
-Size of testing set......................: 6
-Time series length.......................: 80
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Time Series Classification Utility (TSCU) test suite.</a></li><li><a href="#2">Creating a toy dataset</a></li><li><a href="#3">Running TSCU</a></li></ul></div><h2>Time Series Classification Utility (TSCU) test suite.<a name="1"></a></h2><p>The test runs TSCU in default settings.</p><div><ul><li>Author : Huseyin Kaya</li><li>Website: <a href="http://web.itu.edu.tr/huseyinkaya/tscu">http://web.itu.edu.tr/huseyinkaya/tscu</a></li><li>Sources: <a href="https://github.com/hkayabilisim/TSCU">https://github.com/hkayabilisim/TSCU</a></li></ul></div><pre class="codeinput">clear <span class="string">all</span>
+close <span class="string">all</span>
+clc
+</pre><h2>Creating a toy dataset<a name="2"></a></h2><p>Let's create 4 time series with two different classes: 1 and 2. First class represents a sine wave, whereas the later represents a cosine wave. We also deviced an artifical change within the same class time series by warping the time axis with w(t)=t^2.</p><pre> Name  Function       Class
+ a     sin(2*pi*t)    1
+ b     sin(2*pi*t*t)  1
+ c     cos(2*pi*t)    2
+ d     cos(2*pi*t*t)  2</pre><p>If you have UCR data available, then load it as following:</p><pre> trn=load('synthetic_control_TRAIN');
+ tst=load('synthetic_control_TEST');</pre><pre class="codeinput">t = linspace(0,1,29);
+a=sin(2*pi*t); b=sin(2*pi*t.^2);
+c=cos(2*pi*t); d=cos(2*pi*t.^2);
+tst = [ 1 a ; 2 c];
+trn = [ 1 b ; 2 d];
+</pre><h2>Running TSCU<a name="3"></a></h2><p>We run with default settings which means, no alignment is applied. You will see in the confusion matrix that a misclassification will occur.</p><pre class="codeinput">tscu(trn,tst);
+</pre><pre class="codeoutput">Size of training set.....................: 2
+Size of testing set......................: 2
+Time series length.......................: 29
 Classification method....................: K-NN
 Alignment method.........................: None
-Overall Accuracy.........................: 0.833   
-Overall Error............................: 0.167   
-Producer Accuracy........................: 0.667   1.000   
-User Accuracy............................: 1.000   0.750   
-Kappa....................................: 0.667   
-Z-value..................................: 1.354   
+Displaying input data....................: no
+No cross validation is chosen............: 0
+Displaying alignments....................: none
+Dumping distance matrix..................: no
+Class information........................: 1 [TRN:  1 TST:  1]
+Class information........................: 2 [TRN:  1 TST:  1]
+index of testing objects.................:   1   2 
+labels of testing objects (True).........:   1   2 
+labels of testing objects (Estimated)....:   2   2 
+closest training objects.................:   2   2 
+Overall Accuracy.........................: 0.500   
+Overall Error............................: 0.500   
+Producer Accuracy........................: 1.000   0.000   
+User Accuracy............................: 0.500   NaN     
+Kappa....................................: 0.000   
+Z-value..................................: 0.000   
 Confusion matrix.........................: 
 Confusion matrix
           1     2    UA    TO 
-    1     2     0 1.000     2 
-    2     1     3 0.750     4 
-   PA 0.667 1.000 
-   TO     3     3           6 
+    1     1     1 0.500     2 
+    2     0     0   NaN     0 
+   PA 1.000 0.000 
+   TO     1     1           2 
 
-Classification time (sec)................: 0.00    
-</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2012b</a><br></p></div><!--
+Classification time (sec)................: 0.10    
+The end of TSCU..........................: FINISHED
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.9<br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Time Series Classification Utility (TSCU) test suite.
 % The test runs TSCU in default settings. 
+%
 % * Author : Huseyin Kaya
 % * Website: <http://web.itu.edu.tr/huseyinkaya/tscu>
 % * Sources: <https://github.com/hkayabilisim/TSCU>
 
-%% Loading data
-% The data set is TRACE which is
-% available in the TSCU package. For more diverse dataset, please visit
-% the UCR Time Series web site 
-% (<http://www.cs.ucr.edu/~eamonn/time_series_data/>).
-trn=load('TRACE_TRAIN');
-tst=load('TRACE_TEST');
+clear all
+close all
+clc
 
-%% Displaying data
-figure;
-subplot(221); plot(trn(1:3,2:end)'); title('Training / Class 1');
-subplot(222); plot(trn(4:6,2:end)'); title('Training / Class 2');
-subplot(223); plot(tst(1:3,2:end)'); title('Testing / Class 1');
-subplot(224); plot(tst(4:6,2:end)'); title('Testing / Class 2');
+%% Creating a toy dataset
+% Let's create 4 time series with two different classes: 1 and 2. First
+% class represents a sine wave, whereas the later represents a cosine wave.
+% We also deviced an artifical change within the same class time series by
+% warping the time axis with w(t)=t^2.
+% 
+%
+%   Name  Function       Class
+%   a     sin(2*pi*t)    1  
+%   b     sin(2*pi*t*t)  1
+%   c     cos(2*pi*t)    2
+%   d     cos(2*pi*t*t)  2
+%
+% If you have UCR data available, then load it as following:
+%
+%   trn=load('synthetic_control_TRAIN');
+%   tst=load('synthetic_control_TEST');
+%
+t = linspace(0,1,29);
+a=sin(2*pi*t); b=sin(2*pi*t.^2);
+c=cos(2*pi*t); d=cos(2*pi*t.^2);
+tst = [ 1 a ; 2 c];
+trn = [ 1 b ; 2 d];
+
+
 
 %% Running TSCU
-% TSCU is run with its defaults options. It should run in couple
-% of seconds since the alignment is set to 'None' by default. 
-% It means standard good old friend Euclidean distance is used to 
-% measure how two time series are close to each other. 
+% We run with default settings which means, no alignment is applied. You
+% will see in the confusion matrix that a misclassification will occur. 
 tscu(trn,tst);
 
 ##### SOURCE END #####

@@ -35,13 +35,15 @@ trn = [ 1 b ; 2 d];
 
 
 
-%% Running TSCU with SAGA
-% Now let's try SAGA as an alignment algorithm.
-%
-% You will see three figures
-%
-% * original signals
-% * aligned signals
-% * warping between the time series.
-% * mapping between the time series.
-tscu(trn,tst,'Alignment','SAGA','DisplayAlignment',{1,1});
+%% Running TSCU with Constrained SAGA
+% By using DTWbandwidth parameter, you can limit DTW to stay a banded
+% region in the similarity matrix. 
+
+%% 30% percent 
+% In this example we took %30 of the matrix which is enough to get a good
+% alignment
+tscu(trn,tst,'Alignment','CDTW','DTWbandwidth',30,'DisplayAlignment',{1,1});
+
+%% 10% percent 
+% If we further narrow the band, then the alignment is getting worse.
+tscu(trn,tst,'Alignment','CDTW','DTWbandwidth',10,'DisplayAlignment',{1,1});

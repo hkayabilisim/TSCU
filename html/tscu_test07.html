@@ -6,7 +6,7 @@
    <!--
 This HTML is auto-generated from an M-file.
 To make changes, update the M-file and republish this document.
-      --><title>tscu_test02</title><meta name="generator" content="MATLAB 7.9"><meta name="date" content="2013-09-30"><meta name="m-file" content="tscu_test02"><style type="text/css">
+      --><title>tscu_test07</title><meta name="generator" content="MATLAB 7.9"><meta name="date" content="2013-09-30"><meta name="m-file" content="tscu_test07"><style type="text/css">
 
 body {
   background-color: white;
@@ -62,7 +62,7 @@ p.footer {
   color: gray;
 }
 
-  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Time Series Classification Utility (TSCU) test suite.</a></li><li><a href="#2">Creating a toy dataset</a></li><li><a href="#3">Running TSCU</a></li></ul></div><h2>Time Series Classification Utility (TSCU) test suite.<a name="1"></a></h2><p>The test runs TSCU in default settings.</p><div><ul><li>Author : Huseyin Kaya</li><li>Website: <a href="http://web.itu.edu.tr/huseyinkaya/tscu">http://web.itu.edu.tr/huseyinkaya/tscu</a></li><li>Sources: <a href="https://github.com/hkayabilisim/TSCU">https://github.com/hkayabilisim/TSCU</a></li></ul></div><pre class="codeinput">clear <span class="string">all</span>
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Time Series Classification Utility (TSCU) test suite.</a></li><li><a href="#2">Creating a toy dataset</a></li><li><a href="#3">Running TSCU with SAGA</a></li></ul></div><h2>Time Series Classification Utility (TSCU) test suite.<a name="1"></a></h2><p>The test runs TSCU in default settings.</p><div><ul><li>Author : Huseyin Kaya</li><li>Website: <a href="http://web.itu.edu.tr/huseyinkaya/tscu">http://web.itu.edu.tr/huseyinkaya/tscu</a></li><li>Sources: <a href="https://github.com/hkayabilisim/TSCU">https://github.com/hkayabilisim/TSCU</a></li></ul></div><pre class="codeinput">clear <span class="string">all</span>
 close <span class="string">all</span>
 clc
 </pre><h2>Creating a toy dataset<a name="2"></a></h2><p>Let's create 4 time series with two different classes: 1 and 2. First class represents a sine wave, whereas the later represents a cosine wave. We also deviced an artifical change within the same class time series by warping the time axis with w(t)=t^2.</p><pre> Name  Function       Class
@@ -75,39 +75,47 @@ a=sin(2*pi*t); b=sin(2*pi*t.^2);
 c=cos(2*pi*t); d=cos(2*pi*t.^2);
 tst = [ 1 a ; 2 c];
 trn = [ 1 b ; 2 d];
-</pre><h2>Running TSCU<a name="3"></a></h2><p>We run with default settings which means, no alignment is applied. You will see in the confusion matrix that a misclassification will occur. Therefore overall classification accuracy is 0.5.</p><p>This time, let's display input data.</p><pre class="codeinput">tscu(trn,tst,<span class="string">'DisplayInputData'</span>,<span class="string">'yes'</span>);
+</pre><h2>Running TSCU with SAGA<a name="3"></a></h2><p>Now let's try debug mode. This time you will see more messages. For example we can see each distance in KNN calculation.</p><pre class="codeinput">tscu(trn,tst,<span class="string">'Alignment'</span>,<span class="string">'SAGA'</span>,<span class="string">'LogLevel'</span>,<span class="string">'Debug'</span>);
 </pre><pre class="codeoutput">Size of training set.....................: 2
 Size of testing set......................: 2
 Time series length.......................: 29
 Classification method....................: K-NN
-Alignment method.........................: None
-Displaying input data....................: yes
+Alignment method.........................: SAGA
+Displaying input data....................: no
 No cross validation is chosen............: 0
+SAGA number of spline bases..............: 8
+SAGA optimization method.................: GA
+SAGA initial solution....................:  0.00  0.00  0.00  0.00  0.00  0.00  0.00  0.00 
+SAGA cost function.......................: Jcost0
 Displaying alignments....................: none
 Dumping distance matrix..................: no
 Class information........................: 1 [TRN:  1 TST:  1]
 Class information........................: 2 [TRN:  1 TST:  1]
+[    4 of     4] dist(   2,   2).........: 0.055567
+[    3 of     4] dist(   2,   1).........: 2.836141
+[    2 of     4] dist(   1,   2).........: 2.142455
+[    1 of     4] dist(   1,   1).........: 0.115951
 index of testing objects.................:   1   2 
 labels of testing objects (True).........:   1   2 
-labels of testing objects (Estimated)....:   2   2 
-closest training objects.................:   2   2 
-Overall Accuracy.........................: 0.500   
-Overall Error............................: 0.500   
-Producer Accuracy........................: 1.000   0.000   
-User Accuracy............................: 0.500   NaN     
-Kappa....................................: 0.000   
-Z-value..................................: 0.000   
+labels of testing objects (Estimated)....:   1   2 
+closest training objects.................:   1   2 
+Overall Accuracy.........................: 1.000   
+Overall Error............................: 0.000   
+Producer Accuracy........................: 1.000   1.000   
+User Accuracy............................: 1.000   1.000   
+Kappa....................................: 1.000   
+Z-value..................................: Inf     
 Confusion matrix.........................: 
 Confusion matrix
           1     2    UA    TO 
-    1     1     1 0.500     2 
-    2     0     0   NaN     0 
-   PA 1.000 0.000 
+    1     1     0 1.000     1 
+    2     0     1 1.000     1 
+   PA 1.000 1.000 
    TO     1     1           2 
 
-Classification time (sec)................: 0.08    
+Classification time (sec)................: 3.75    
 The end of TSCU..........................: FINISHED
-</pre><img vspace="5" hspace="5" src="tscu_test02_01.png" alt=""> <img vspace="5" hspace="5" src="tscu_test02_02.png" alt=""> <p class="footer"><br>
+</pre><p class="footer"><br>
       Published with MATLAB&reg; 7.9<br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Time Series Classification Utility (TSCU) test suite.
@@ -147,13 +155,9 @@ trn = [ 1 b ; 2 d];
 
 
 
-%% Running TSCU
-% We run with default settings which means, no alignment is applied. You
-% will see in the confusion matrix that a misclassification will occur.
-% Therefore overall classification accuracy is 0.5.
-%
-% This time, let's display input data.
-tscu(trn,tst,'DisplayInputData','yes');
-
+%% Running TSCU with SAGA
+% Now let's try debug mode. This time you will see more messages. For
+% example we can see each distance in KNN calculation.
+tscu(trn,tst,'Alignment','SAGA','LogLevel','Debug');
 ##### SOURCE END #####
 --></body></html>

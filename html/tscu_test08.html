@@ -1,0 +1,210 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML is auto-generated from an M-file.
+To make changes, update the M-file and republish this document.
+      --><title>tscu_test08</title><meta name="generator" content="MATLAB 7.9"><meta name="date" content="2013-09-30"><meta name="m-file" content="tscu_test08"><style type="text/css">
+
+body {
+  background-color: white;
+  margin:10px;
+}
+
+h1 {
+  color: #990000; 
+  font-size: x-large;
+}
+
+h2 {
+  color: #990000;
+  font-size: medium;
+}
+
+/* Make the text shrink to fit narrow windows, but not stretch too far in 
+wide windows. */ 
+p,h1,h2,div.content div {
+  max-width: 600px;
+  /* Hack for IE6 */
+  width: auto !important; width: 600px;
+}
+
+pre.codeinput {
+  background: #EEEEEE;
+  padding: 10px;
+}
+@media print {
+  pre.codeinput {word-wrap:break-word; width:100%;}
+} 
+
+span.keyword {color: #0000FF}
+span.comment {color: #228B22}
+span.string {color: #A020F0}
+span.untermstring {color: #B20000}
+span.syscmd {color: #B28C00}
+
+pre.codeoutput {
+  color: #666666;
+  padding: 10px;
+}
+
+pre.error {
+  color: red;
+}
+
+p.footer {
+  text-align: right;
+  font-size: xx-small;
+  font-weight: lighter;
+  font-style: italic;
+  color: gray;
+}
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Time Series Classification Utility (TSCU) test suite.</a></li><li><a href="#2">Parallel processing</a></li><li><a href="#3">Loading data</a></li><li><a href="#4">Running in parallel</a></li><li><a href="#5">Recording the times</a></li><li><a href="#6">Speed-up and efficieny</a></li><li><a href="#7">Speedup</a></li><li><a href="#8">Elapsed Times</a></li><li><a href="#9">Efficiency</a></li></ul></div><h2>Time Series Classification Utility (TSCU) test suite.<a name="1"></a></h2><p>The test runs TSCU in default settings.</p><div><ul><li>Author : Huseyin Kaya</li><li>Website: <a href="http://web.itu.edu.tr/huseyinkaya/tscu">http://web.itu.edu.tr/huseyinkaya/tscu</a></li><li>Sources: <a href="https://github.com/hkayabilisim/TSCU">https://github.com/hkayabilisim/TSCU</a></li></ul></div><pre class="codeinput">clear <span class="string">all</span>
+close <span class="string">all</span>
+clc
+</pre><h2>Parallel processing<a name="2"></a></h2><p>In order to use parallel processing, you have to have MATLAB parallel toolbox which I have in our Istanbul Technical University. I used one of the UCR datasets which I didn't include in the package. But here I show you how I did the calculations.</p><h2>Loading data<a name="3"></a></h2><p>I loaded the UCR data as follows:</p><pre>  trn=load('../../UCR/DiatomSizeReduction/DiatomSizeReduction_TRAIN');
+  tst=load('../../UCR/DiatomSizeReduction/DiatomSizeReduction_TEST');</pre><h2>Running in parallel<a name="4"></a></h2><p>Then I run the program for difference number of processor. The karadeniz_XX is the name of the pool I defined in the MATLAB parallel toolbox.</p><pre>  tscu(trn,tst,'Alignment','SAGA','MATLABPool','karadeniz_64');
+  tscu(trn,tst,'Alignment','SAGA','MATLABPool','karadeniz_32');
+  tscu(trn,tst,'Alignment','SAGA','MATLABPool','karadeniz_16');
+  tscu(trn,tst,'Alignment','SAGA','MATLABPool','karadeniz_8');
+  tscu(trn,tst,'Alignment','SAGA','MATLABPool','karadeniz_4');
+  tscu(trn,tst,'Alignment','SAGA','MATLABPool','karadeniz_2');</pre><h2>Recording the times<a name="5"></a></h2><p>Then I recorded the classification times for each run. Here are them:</p><pre class="codeinput">nps   = [1 2 4 8 16 32 64];
+times = [5146.74 2573.37 1305.21 690.90 344.25 172.19 87.03];
+</pre><h2>Speed-up and efficieny<a name="6"></a></h2><p>By using the elapsed times, it is easy to calculate the speed-up and efficieny.</p><pre class="codeinput">speedups = times(1)./times;
+exptimes = times(1)*ones(1,length(nps))./nps;
+obttimes = times;
+efficieny = speedups./nps;
+</pre><h2>Speedup<a name="7"></a></h2><p>Finally I plotted the figures in log scale.</p><pre class="codeinput">addpath(<span class="string">'lib/export_fig'</span>);
+figure
+plot(log2(nps),log2(speedups),<span class="string">'--bs'</span>)
+hold <span class="string">on</span>
+plot(log2(nps),log2(nps),<span class="string">'--rs'</span>)
+legend(<span class="string">'Obtained'</span>,<span class="string">'Expected'</span>,<span class="string">'Location'</span>,<span class="string">'NorthWest'</span>);
+xlabel(<span class="string">'# of processors'</span>);
+ylabel(<span class="string">'speedup'</span>)
+title(<span class="string">'Speedup (log2/log2 scaled)'</span>);
+set(gca,<span class="string">'XTickLabel'</span>,nps);
+set(gca,<span class="string">'YTickLabel'</span>,nps);
+export_fig(<span class="string">'-pdf'</span>,<span class="string">'-transparent'</span>,<span class="string">'tscu_test08_speedup.pdf'</span>);
+</pre><img vspace="5" hspace="5" src="tscu_test08_01.png" alt=""> <h2>Elapsed Times<a name="8"></a></h2><pre class="codeinput">figure
+plot(log2(nps),log2(obttimes),<span class="string">'--bs'</span>)
+hold <span class="string">on</span>
+plot(log2(nps),log2(exptimes),<span class="string">'--rs'</span>)
+legend(<span class="string">'Obtained'</span>,<span class="string">'Expected'</span>,<span class="string">'Location'</span>,<span class="string">'NorthEast'</span>);
+xlabel(<span class="string">'# of processors (log2 scaled)'</span>);
+ylabel(<span class="string">'log2 of elapsed time (sec)'</span>)
+title(<span class="string">'Elapsed times'</span>);
+set(gca,<span class="string">'XTickLabel'</span>,nps);
+<span class="comment">%set(gca,'YTickLabel',nps);</span>
+<span class="comment">%figuresize(15,15,'centimeters');</span>
+export_fig(<span class="string">'-pdf'</span>,<span class="string">'-transparent'</span>,<span class="string">'tscu_test08_elapsed.pdf'</span>);
+</pre><img vspace="5" hspace="5" src="tscu_test08_02.png" alt=""> <h2>Efficiency<a name="9"></a></h2><pre class="codeinput">figure
+plot(log2(nps),100*efficieny,<span class="string">'--bs'</span>)
+xlabel(<span class="string">'# of processors (log2 scaled)'</span>);
+ylabel(<span class="string">'efficieny'</span>)
+title(<span class="string">'Efficieny'</span>);
+set(gca,<span class="string">'XTickLabel'</span>,nps);
+<span class="comment">%set(gca,'YTickLabel',nps);</span>
+<span class="comment">%figuresize(15,15,'centimeters');</span>
+<span class="comment">%print -dpdf 'Experiment42-efficieny.pdf'</span>
+export_fig(<span class="string">'-pdf'</span>,<span class="string">'-transparent'</span>,<span class="string">'tscu_test08_efficiency.pdf'</span>);
+</pre><img vspace="5" hspace="5" src="tscu_test08_03.png" alt=""> <p class="footer"><br>
+      Published with MATLAB&reg; 7.9<br></p></div><!--
+##### SOURCE BEGIN #####
+%% Time Series Classification Utility (TSCU) test suite.
+% The test runs TSCU in default settings. 
+%
+% * Author : Huseyin Kaya
+% * Website: <http://web.itu.edu.tr/huseyinkaya/tscu>
+% * Sources: <https://github.com/hkayabilisim/TSCU>
+
+clear all
+close all
+clc
+
+%% Parallel processing
+% In order to use parallel processing, you have to have MATLAB parallel
+% toolbox which I have in our Istanbul Technical University. I used one of
+% the UCR datasets which I didn't include in the package.
+% But here I show you how I did the calculations.
+
+%% Loading data
+% I loaded the UCR data as follows:
+%
+%    trn=load('../../UCR/DiatomSizeReduction/DiatomSizeReduction_TRAIN');
+%    tst=load('../../UCR/DiatomSizeReduction/DiatomSizeReduction_TEST');
+% 
+%% Running in parallel
+% Then I run the program for difference number of processor. The
+% karadeniz_XX is the name of the pool I defined in the MATLAB parallel
+% toolbox.
+%
+%    tscu(trn,tst,'Alignment','SAGA','MATLABPool','karadeniz_64');
+%    tscu(trn,tst,'Alignment','SAGA','MATLABPool','karadeniz_32');
+%    tscu(trn,tst,'Alignment','SAGA','MATLABPool','karadeniz_16');
+%    tscu(trn,tst,'Alignment','SAGA','MATLABPool','karadeniz_8');
+%    tscu(trn,tst,'Alignment','SAGA','MATLABPool','karadeniz_4');
+%    tscu(trn,tst,'Alignment','SAGA','MATLABPool','karadeniz_2');
+%
+%% Recording the times
+% Then I recorded the classification times for each run. Here are them:
+nps   = [1 2 4 8 16 32 64];
+times = [5146.74 2573.37 1305.21 690.90 344.25 172.19 87.03];
+
+%% Speed-up and efficieny
+% By using the elapsed times, it is easy to calculate the speed-up and
+% efficieny.
+speedups = times(1)./times;
+exptimes = times(1)*ones(1,length(nps))./nps;
+obttimes = times;
+efficieny = speedups./nps;
+
+%% Speedup
+% Finally I plotted the figures in log scale.
+addpath('lib/export_fig');
+figure
+plot(log2(nps),log2(speedups),'REPLACE_WITH_DASH_DASHbs')
+hold on
+plot(log2(nps),log2(nps),'REPLACE_WITH_DASH_DASHrs')
+legend('Obtained','Expected','Location','NorthWest');
+xlabel('# of processors');
+ylabel('speedup')
+title('Speedup (log2/log2 scaled)');
+set(gca,'XTickLabel',nps);
+set(gca,'YTickLabel',nps);
+export_fig('-pdf','-transparent','tscu_test08_speedup.pdf');
+
+%% Elapsed Times
+figure
+plot(log2(nps),log2(obttimes),'REPLACE_WITH_DASH_DASHbs')
+hold on
+plot(log2(nps),log2(exptimes),'REPLACE_WITH_DASH_DASHrs')
+legend('Obtained','Expected','Location','NorthEast');
+xlabel('# of processors (log2 scaled)');
+ylabel('log2 of elapsed time (sec)')
+title('Elapsed times');
+set(gca,'XTickLabel',nps);
+%set(gca,'YTickLabel',nps);
+%figuresize(15,15,'centimeters');
+export_fig('-pdf','-transparent','tscu_test08_elapsed.pdf');
+
+%% Efficiency
+figure
+plot(log2(nps),100*efficieny,'REPLACE_WITH_DASH_DASHbs')
+xlabel('# of processors (log2 scaled)');
+ylabel('efficieny')
+title('Efficieny');
+set(gca,'XTickLabel',nps);
+%set(gca,'YTickLabel',nps);
+%figuresize(15,15,'centimeters');
+%print -dpdf 'Experiment42-efficieny.pdf'
+export_fig('-pdf','-transparent','tscu_test08_efficiency.pdf');
+
+
+
+
+##### SOURCE END #####
+--></body></html>

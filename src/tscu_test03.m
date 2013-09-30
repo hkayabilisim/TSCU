@@ -1,28 +1,42 @@
 %% Time Series Classification Utility (TSCU) test suite.
-%
-% This test is to demonstrate the paralel computing option.
-% If 'MATLABPool' option is set to 'local', then classification
-% is carried out on available cores in the local computer.
+% The test runs TSCU in default settings. 
 %
 % * Author : Huseyin Kaya
 % * Website: <http://web.itu.edu.tr/huseyinkaya/tscu>
 % * Sources: <https://github.com/hkayabilisim/TSCU>
 
-%% Loading data
-% I'm using Synthetic Control dataset downloaded from 
-% UCR Time Series web site 
-% (<http://www.cs.ucr.edu/~eamonn/time_series_data/>). 
-% You should find files in the TSCU distribution. 
-% If not, then go ahead and download them from UCR web site.
-trn=load('synthetic_control_TRAIN');
-tst=load('synthetic_control_TEST');
+clear all
+close all
+clc
 
-%% Running TSCU in serial
-% By default, it runs in serial.
-tscu(trn,tst,'Alignment','DTW');
+%% Creating a toy dataset
+% Let's create 4 time series with two different classes: 1 and 2. First
+% class represents a sine wave, whereas the later represents a cosine wave.
+% We also deviced an artifical change within the same class time series by
+% warping the time axis with w(t)=t^2.
+% 
+%
+%   Name  Function       Class
+%   a     sin(2*pi*t)    1  
+%   b     sin(2*pi*t*t)  1
+%   c     cos(2*pi*t)    2
+%   d     cos(2*pi*t*t)  2
+%
+% If you have UCR data available, then load it as following:
+%
+%   trn=load('synthetic_control_TRAIN');
+%   tst=load('synthetic_control_TEST');
+%
+t = linspace(0,1,29);
+a=sin(2*pi*t); b=sin(2*pi*t.^2);
+c=cos(2*pi*t); d=cos(2*pi*t.^2);
+tst = [ 1 a ; 2 c];
+trn = [ 1 b ; 2 d];
 
-%% Running TSCU in parallel
-% Running with default options but 'MATLABPool' is set to
-% 'local' to speed up the calculation by using the available
-% cores in the PC.
-tscu(trn,tst,'Alignment','DTW','MATLABPool','local');
+
+
+%% Running TSCU
+% This time, let's display input data and use DTW as the alignment. Now
+% thanks to the alignment you % will that there is no misclassification 
+% error.
+tscu(trn,tst,'DisplayInputData','yes','Alignment','DTW');
