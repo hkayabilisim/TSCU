@@ -69,7 +69,7 @@ Time Series Classification Utility (TSCU) is a simple MATLAB program that you ca
 
 I decided to prepare TSCU during my PhD which is about creating a new time series alignment algorithm and its application to various real$-$world problems. There were (and there are still) a bunch of useful tools for time series alignment, but none of them seem to provide a general framework for classification \cite{UCRWeb}. I also wanted to create a useful website so that people searching for a time series classification task will find all crucial information quickly.
 \section{Installation}
-TSCU is freely available from GitHub. Majority of the code lies in just one MATLAB script: tscu.m. However it is recommended to fetch the whole repository (which is about 1Mb) in order to obtain a few dependent files. You can use the following command to download the repository:
+TSCU is freely available from GitHub. Majority of the code lies in just one MATLAB script: tscu.m. However it is recommended to fetch the whole repository in order to obtain a few dependent files. You can use the following command to download the repository:
 \begin{verbatim}
 git clone https://github.com/hkayabilisim/TSCU.git
 \end{verbatim}
@@ -106,6 +106,9 @@ If, for some reason, you don't want to use Acceleration framework, then you can 
 
 There is no significant performance gain if you choose to use the Acceleration framework. 
 Yet another alternative would be to use ATLAS which I haven't tried yet. 
+
+\item%
+The utility creates some PDF files when using some of the options like \parametre{DisplayAlignment}. In order to produce nicely cropped PDF, I use a small utility called \parametre{export\_fig} which depends on Ghostscript. So you may need to install Ghostscript from \verb|www.ghostscript.com|  especially for Windows architecture.
 \end{itemize}
 
 \section{Running}
