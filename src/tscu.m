@@ -67,19 +67,42 @@ function out = tscu(x,y,varargin)
 %   
 %   'reportLineWidth': Line width of report lines. Actually it defines
 %    the width of the first part of the lines.
-%    default = 60
+%    default : 60
 %
-%   trainingRatio: Ratios of training set to the whole set of training
+%   'trainingRatio': Ratios of training set to the whole set of training
 %    and testing. Defined between 0 and 1.
 %    default : 0.30
+%
+%   'DTWbandwidth': It is the width of the Sakoe-Chiba band defined in
+%    percentage. Setting it to 100 is the same effect as running DTW.
+%    default: 6
 %
 %   'DisplayInputData': Display both training and testing data
 %    'yes'          : plot the input data
 %    'no'           : don't display!
 %    default : 'no'
 %
+%   'DisplayAlignment': Display alignment for the specified instances
+%    defined as {trnidx, tstidx}
+%    default : {[],[]} (means no alignment is displayed)
+%    example : tscu(trn,tst,'DisplayAlignment',{[1 3],[1]}) will display the 
+%    alignment of test sample 1 to the training samples 1 and 3, so 
+%    two alignments will be displayed.
+%    
+%    The figures will be saved in PDF on the current directory.
+%
+%   'DumpDistanceMatrix': Dump the distance matrix ta a txt file.
+%    'yes' : dump it
+%    'no'  : don't!
+%    default : 'no'
+%
 %   Z = TSCU(...) returns output values in the structure Z.
 %
+
+% I'm adding this small library of Oliver Woodford to produce PDFs 
+% ready for publication It's license allows me to include it. 
+% See lib/export_fig/license.txt
+addpath('lib/export_fig');
 
 options = getDefaultOptions;
 if nargin == 0
@@ -122,7 +145,11 @@ else
             case 'CrossValidation'
                 options.CrossValidation = varargin{i+1};
             case 'DisplayInputData'
-		options.DisplayInputData = varargin{i+1};    
+		        options.DisplayInputData = varargin{i+1};    
+            case 'DisplayAlignment'
+                options.DisplayAlignment = varargin{i+1};
+            case 'DumpDistanceMatrix'
+                options.DumpDistanceMatrix = varargin{i+1};
         end
     end
 end
@@ -160,8 +187,9 @@ displine('Info','Displaying input data',options.DisplayInputData,options);
 if options.CrossValidation < 1
     displine('Info','No cross validation is chosen',...
         sprintf('%d',options.CrossValidation),options);
-
 else
+    displine('Info','Cross validation is not implemented',...
+        sprintf('%d',options.CrossValidation),options);
 end
 if strcmp(options.alignment,'SAGA')
     displine('Info','SAGA number of spline bases',...
@@ -179,6 +207,17 @@ end
 if ~isempty(options.MATLABPool)
     displine('Info','MATLAB Pool',options.MATLABPool,options);
 end
+
+if numel(options.DisplayAlignment{1}) > 0 && numel(options.DisplayAlignment{2}) > 0
+    displine('Info','Displaying alignments (trn)',...
+        sprintf('%d',options.DisplayAlignment{1}),options);
+    displine('Info','Displaying alignments (tst)',...
+        sprintf('%d',options.DisplayAlignment{2}),options);
+else
+    displine('Info','Displaying alignments','none',options);
+end
+displine('Info','Dumping distance matrix',options.DumpDistanceMatrix,options);
+
 
 % Displaying Input Data
 if strcmp(options.DisplayInputData,'yes')
@@ -272,12 +311,11 @@ options.SAGABaseLength          = 8;
 options.SAGAInitialSolution     = zeros(1,options.SAGABaseLength);
 options.DisplayInputData        = 'no';
 options.CrossValidation         = 0;
-
+options.DisplayAlignment        = {[],[]};
+options.DumpDistanceMatrix      = 'no';
 if nargin > 0 && mod(nargin,2) ~= 0
     error('tscu:invalidoption','The number of input variables must be even');
 end
-
-
 end
 
 function displine(l,k,v,o)
@@ -365,20 +403,15 @@ function labels = nnclassifier(x,y,options)
 %   testing set Y by using the time series in training set X with the
 %   nearest neighbor algorithm resulting estimated labels LABELS.
 xlabels = x(:,1);
-n = size(x,1);
-m = size(y,1);
+ylabels = y(:,1);
+n = size(x,1); % training
+m = size(y,1); % testing
 [yIdx,xIdx] = meshgrid(1:m,1:n);
 alldistances = zeros(1,n*m);
 
-% For the sake of better parallization, I preallocate the pair
-% of time series to be used in each comparison. 
-%ySliced = cell(n*m);
-%xSliced = cell(n*m);
-%for i = 1:n*m
-%    ySliced{i} = y(yIdx(i),2:end);
-%    xSliced{i} = x(xIdx(i),2:end); 
-%end
 Alignment = options.alignment;
+DisplayAlignmentMat = zeros(n,m);
+DisplayAlignmentMat(options.DisplayAlignment{1},options.DisplayAlignment{2})=1;
 
 % It may seem awkward not to use two inner loops for a simple
 % K-NN classifier. The reason is that I should use just one loop 
@@ -389,23 +422,122 @@ parfor i = 1 : n*m
         switch Alignment
             case 'None'
                 alldistances(i) = sqrt(sum((xObject - yObject).^2)); 
+                path1 = 1:numel(xObject);
+                path2 = 1:numel(yObject);
             case 'DTW'
-                alldistances(i) = dtwalignment(xObject,yObject);
+                [alldistances(i) path1 path2] = dtwalignment(xObject,yObject);
             case 'CDTW'
-                alldistances(i) = cdtwalignment(xObject,yObject,options);
+                [alldistances(i) path1 path2] = cdtwalignment(xObject,yObject,options);
             case 'SAGA'
-                alldistances(i) = sagaalignment(xObject,yObject,options);
+                [alldistances(i) path1 path2] = sagaalignment(xObject,yObject,options);
             otherwise
                 alldistances(i) = sqrt(sum((xObject - yObject).^2));
         end
         displine('Debug',sprintf('[%5d of %5d] dist(%4d,%4d)',i,n*m,yIdx(i),xIdx(i)),...
             sprintf('%f',alldistances(i)),options);
+        if DisplayAlignmentMat(i)
+            displayAlignment(x,y,xIdx(i),yIdx(i),path1,path2,Alignment,options)
+        end
 end
-    
-[dummy, mindistanceIdx]=min(reshape(alldistances,n,m));
+distancematrix = reshape(alldistances,n,m);
+[dummy, mindistanceIdx]=min(distancematrix);
 labels = xlabels(mindistanceIdx);
+displine('Info','index of testing objects',sprintf('%3d ',1:m),options);
+displine('Info','labels of testing objects (True)',sprintf('%3d ',ylabels),options);
+displine('Info','labels of testing objects (Estimated)',sprintf('%3d ',labels),options);
+displine('Info','closest training objects',sprintf('%3d ',mindistanceIdx),options);
+
+if strcmp(options.DumpDistanceMatrix,'yes')
+    save(sprintf('tscu_distancematrix_%s.txt',Alignment),'distancematrix','-ascii');
 end
 
+end
+
+function  displayAlignment(x,y,xIdx,yIdx,path1,path2,Alignment,options)
+%DISPLAYALIGNMENT Displays the aligned time series
+%   DISPLAYALIGNMENT(x,y,xIdx,yIdx,path1,path2,Alignment,options) will
+%   display the alignment between the time series x(xIdx,2:end))
+%   and y(yIdx,2:end)) by using the determined warpings path1 and path2
+%   found by the alignment method Alignment.
+    xObject = x(xIdx,2:end);
+    yObject = y(yIdx,2:end);
+    xAligned = xObject(path1);
+    yAligned = yObject(path2);
+    
+    nx = numel(xObject);
+    xmin = min(xObject);
+    xmax = max(xObject);
+
+    ny = numel(yObject);
+    ymin = min(yObject);
+    ymax = max(yObject);
+    
+    dx = 10;
+    if nx < 30
+        dx = nx;
+    end
+    xgrid=round(linspace(1,nx,dx));
+    ygrid=round(linspace(1,ny,dx));
+    
+    relErrBefore = norm(xObject - yObject)/norm(xObject);
+    relErrAfter  = norm(xAligned - yAligned)/norm(xAligned);
+    
+    figure('Visible','on');
+    plot(xObject,'b');
+    hold on;
+    plot(yObject,'r');
+    %legend(sprintf('TRN %d',xIdx),sprintf('TST %d',yIdx));
+    legend('Training','Testing');
+    
+    title(sprintf('Originals Distance: %8.5f',relErrBefore));
+    export_fig('-pdf','-transparent',...
+        sprintf('tscu_alignment_%03d_%03d_%s_before.pdf',xIdx,yIdx,Alignment));
+
+    figure('Visible','on');
+    plot(xAligned,'b');
+    hold on;
+    plot(yAligned,'r');
+    %legend(sprintf('TRN %d',xIdx),sprintf('TST %d',yIdx));
+    legend('Training','Testing');
+    title(sprintf('Alignment (%s) Distance: %8.5f',Alignment,relErrAfter)); 
+    export_fig('-pdf','-transparent',...
+        sprintf('tscu_alignment_%03d_%03d_%s_after.pdf',xIdx,yIdx,Alignment));
+    
+    figure('Visible','on');
+    plot(path1,path2,'b');
+    hold on
+    plot(nx*0.20*((xObject-xmin)/(xmax-xmin)-1),'r');
+    plot(ny*0.20*((yObject-ymin)/(ymax-ymin)-1),1:ny,'r');
+    set(gca,'XTick',[],'YTick',[])
+    box on
+    plot(xgrid,meshgrid(xgrid,ygrid),'k:');
+    plot(meshgrid(xgrid,ygrid),ygrid,'k:');
+    
+    
+    if strcmp(Alignment,'CDTW')
+        band=floor(options.DTWbandwidth*nx/100);
+        plot([1 1    nx-band nx],[1 band ny      ny],'k');
+        plot([1 band nx      nx],[1 1    ny-band ny],'k');
+    end
+    
+    axis equal
+    xlim([-nx*0.20 nx+1]);
+    ylim([-ny*0.20 ny+1]);
+    export_fig('-pdf','-transparent',...
+        sprintf('tscu_alignment_%03d_%03d_%s_warping.pdf',xIdx,yIdx,Alignment));
+    
+    figure('Visible','on');
+    for i=round(linspace(1,length(path1),50))
+        plot([path1(i) path2(i)], [xObject(path1(i)) yObject(path2(i))+2*xmax],'k'); hold on 
+    end
+    plot(xObject,'b');
+    plot(2*xmax+yObject','b');
+    xlim([0 nx]);
+    set(gca,'XTick',[],'YTick',[])
+    box on
+    export_fig('-pdf','-transparent',...
+        sprintf('tscu_alignment_%03d_%03d_%s_warpingLines.pdf',xIdx,yIdx,Alignment));    
+end
 
 function [distance, path1, path2] = sagaalignment(x,y,options)
 %SAGAALIGNMENT Signal Alignment via Genetic Algorithm
@@ -442,7 +574,9 @@ function [distance, path1, path2] = sagaalignment(x,y,options)
                 [sbest, distance]=ga(J,options.SAGABaseLength);
         end
         path1 = 1:length(x);
-        path2 = interp1(t,y,ramsay(t,sbest));
+        path2 = round(interp1(t,1:length(y),ramsay(t,sbest)));
+        path2(path2<1)=1;
+        path2(path2>length(y))=length(y);
 end
 
 function [distance,path1,path2] = dtwalignment(x,y)
@@ -451,6 +585,8 @@ function [distance,path1,path2] = dtwalignment(x,y)
 %   the objects X and Y using available options OPTIONS and returns
 %   the distance in DISTANCE and warping paths in PATH1 and PATH2.
 [distance,path1, path2]=dtw(x,y,length(x));
+path1 = fliplr(path1);
+path2 = fliplr(path2);
 end
 
 function [distance, path1, path2] = cdtwalignment(x,y,options)
@@ -459,6 +595,8 @@ function [distance, path1, path2] = cdtwalignment(x,y,options)
 %   the objects X and Y using available options OPTIONS and returns
 %   the distance in DISTANCE and warping paths in PATH1 and PATH2.
 [distance, path1, path2]=dtw(x,y,floor(options.DTWbandwidth*length(x)/100));
+path1 = fliplr(path1);
+path2 = fliplr(path2);
 end
 
 function perf = performance(truelabels,estimatedlabels)
