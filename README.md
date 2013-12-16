@@ -5,7 +5,7 @@ that is used to classify time series by using various distance
 metrics and classification methods.
 
 * Author: Huseyin Kaya, hkayabilisim@gmail.com, 2013/03/02
-* Web Page: http://web.itu.edu.tr/~huseyinkaya/tscu
+* Web Page: http://tscu.blogspot.com
 * Source Page:  https://github.com/hkayabilisim/TSCU.git
 
 SOURCE CODE
@@ -14,20 +14,20 @@ Source files are available at https://github.com/hkayabilisim/TSCU.git
 
 INSTALLATION
 ============
-Please see http://web.itu.edu.tr/huseyinkaya/tscu.
+Please see http://tscu.blogspot.com
 
 EXAMPLES
 ========
-You can execute the demo files, "tscu-testXX.m" to see TSCU in action
+You can execute the test scripts "tscu-testXX.m" to see TSCU in action
 or examine their published outputs on the web page.
 
 DOCUMENTATION
 =============
-Please see http://web.itu.edu.tr/huseyinkaya/tscu and the User Manual.
+Please see http://tscu.blogspot.com
 
 TODO
 ====
-* Linear SVM should be added as an alternative classification scheme.
+* Linear SVM will be added as an alternative classification scheme.
 
 FEATURES
 ========
