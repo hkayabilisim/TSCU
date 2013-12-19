@@ -1,8 +1,9 @@
 %% Time Series Classification Utility (TSCU) test suite.
-% The test runs TSCU in default settings. 
+% The test runs TSCU with settings on artifical dataset. This time we use 
+% |DisplayInputData| option to see the input time series.
 %
 % * Author : Huseyin Kaya
-% * Website: <http://web.itu.edu.tr/huseyinkaya/tscu>
+% * Website: <http://tscu.blogspot.com>
 % * Sources: <https://github.com/hkayabilisim/TSCU>
 
 clear all

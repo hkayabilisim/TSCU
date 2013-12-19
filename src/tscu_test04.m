@@ -1,8 +1,13 @@
 %% Time Series Classification Utility (TSCU) test suite.
-% The test runs TSCU in default settings. 
+% The test runs TSCU with Dynamic Time Warping as the alignment method.
+% This time we use |DisplayAlignment| option to display the aligned time
+% series. The options used:
+%
+% * |Alignment|        
+% * |DisplayAlignment|
 %
 % * Author : Huseyin Kaya
-% * Website: <http://web.itu.edu.tr/huseyinkaya/tscu>
+% * Website: <http://tscu.blogspot.com>
 % * Sources: <https://github.com/hkayabilisim/TSCU>
 
 clear all
@@ -21,12 +26,6 @@ clc
 %   b     sin(2*pi*t*t)  1
 %   c     cos(2*pi*t)    2
 %   d     cos(2*pi*t*t)  2
-%
-% If you have UCR data available, then load it as following:
-%
-%   trn=load('synthetic_control_TRAIN');
-%   tst=load('synthetic_control_TEST');
-%
 t = linspace(0,1,29);
 a=sin(2*pi*t); b=sin(2*pi*t.^2);
 c=cos(2*pi*t); d=cos(2*pi*t.^2);
@@ -34,8 +33,7 @@ tst = [ 1 a ; 2 c];
 trn = [ 1 b ; 2 d];
 
 
-
-%% Running TSCU
+%% Running TSCU with DTW
 % This time, we want to display a specific alignment between the first
 % sample in the training and the first sample in testing.
 %

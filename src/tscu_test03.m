@@ -1,10 +1,10 @@
 %% Time Series Classification Utility (TSCU) test suite.
-% The test runs TSCU in default settings. 
+% The test runs TSCU with Dynamic Time Warping on a small artifical
+% dataset.
 %
 % * Author : Huseyin Kaya
-% * Website: <http://web.itu.edu.tr/huseyinkaya/tscu>
+% * Website: <http://tscu.blogspot.com>
 % * Sources: <https://github.com/hkayabilisim/TSCU>
-
 clear all
 close all
 clc
@@ -33,10 +33,8 @@ c=cos(2*pi*t); d=cos(2*pi*t.^2);
 tst = [ 1 a ; 2 c];
 trn = [ 1 b ; 2 d];
 
-
-
-%% Running TSCU
+%% Running TSCU with Dynamic Time Warping
 % This time, let's display input data and use DTW as the alignment. Now
-% thanks to the alignment you % will that there is no misclassification 
+% thanks to the alignment you will that there is no misclassification 
 % error.
-tscu(trn,tst,'DisplayInputData','yes','Alignment','DTW');
+tscu(trn,tst,'Alignment','DTW');
