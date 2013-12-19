@@ -419,17 +419,17 @@ DisplayAlignmentMat(options.DisplayAlignment{1},options.DisplayAlignment{2})=1;
 parfor i = 1 : n*m
         yObject = y(yIdx(i),2:end); 
         xObject = x(xIdx(i),2:end);
+        path1 = 1:numel(xObject); 
+        path2 = 1:numel(yObject);
         switch Alignment
             case 'None'
                 alldistances(i) = sqrt(sum((xObject - yObject).^2)); 
-                path1 = 1:numel(xObject);
-                path2 = 1:numel(yObject);
             case 'DTW'
-                [alldistances(i) path1 path2] = dtwalignment(xObject,yObject);
+                [alldistances(i), path1, path2] = dtwalignment(xObject,yObject);
             case 'CDTW'
-                [alldistances(i) path1 path2] = cdtwalignment(xObject,yObject,options);
+                [alldistances(i), path1, path2] = cdtwalignment(xObject,yObject,options);
             case 'SAGA'
-                [alldistances(i) path1 path2] = sagaalignment(xObject,yObject,options);
+                [alldistances(i), path1, path2] = sagaalignment(xObject,yObject,options);
             otherwise
                 alldistances(i) = sqrt(sum((xObject - yObject).^2));
         end
