@@ -14,20 +14,27 @@ function out = tscu(x,y,varargin)
 %   respectively. The first column of both X and Y should be the labels of
 %   the time series.
 %
-%   TSCU(X,Y,'option1',value1,'option2',value2,...) classifies 
-%   the time series in Y by using training set X by using the options. 
+%   TSCU(X,Y,'option1',value1,'option2',value2,...) classifies
+%   the time series in Y by using training set X by using the options.
 %   Available options are:
 %
 %   'Classifier': The preferrred classification technique
 %    'K-NN'   : K Nearest Neighbor
+%    'SVM'    : Linear Support Vector Machines
 %    default  : 'K-NN'
 %
 %   'Alignment': Alignment method
-%    'None'   : no alignment
+%    'NONE'   : no alignment
 %    'DTW'    : Dynamic Time Warping
 %    'CDTW'   : Constained Time Warping
 %    'SAGA'   : Signal Alignment via Genetic Algorithm
-%    default  : 'None'
+%    'CREG'   : Curve Registration of Ramsay & Silverman
+%    default  : 'NONE'
+%
+%   'SVMKernel': Kernel type of SVM classifier
+%    'linear'     : Linear
+%    'gaussian'   : Gaussian
+%    default      : 'linear'
 %
 %   'LogLevel': Log level
 %    'Emergency'  : (level 0)
@@ -36,19 +43,15 @@ function out = tscu(x,y,varargin)
 %    'Error'      : (level 3)
 %    'Warning'    : (level 4)
 %    'Notice'     : (level 5)
-%    'Info'       : (level 6) 
+%    'Info'       : (level 6)
 %    'Debug'      : (level 7)
 %    default      : 'Info'
 %
-%   'SAGACostFunction': Cost function used in SAGA
-%    'Jcost0'     : Euclidean distance of x to y(w(t))
-%    'Jcost1'     : MEX counterpart of Jcost0
-%    default      : 'Jcost0'
-%
 %   'SAGAOptimizationMethod': Optimization technique used in SAGA
 %    'GA'         : Genetic Algorithm
+%    'GA_MEX'     : A simplified MEX version of Genetic Algorithm
 %    'Simplex'    : Nelder-Mead Simplex method (fminsearch of MATLAB)
-%    default      : 'GA'
+%    default      : 'GA_MEX'
 %
 %   'SAGABaseLength': The number of B-spline bases in ODE
 %    default      : 8
@@ -56,7 +59,7 @@ function out = tscu(x,y,varargin)
 %   'SAGAInitialSolution': Initial solution in SAGA
 %    default      : zero vector with length SAGABaseLength.
 %
-%   'CrossValidation': An integer specifying how many time the 
+%   'CrossValidation': An integer specifying how many time the
 %    cross validation takes place.
 %    default      : 0 means don't do cross validation
 %
@@ -64,7 +67,7 @@ function out = tscu(x,y,varargin)
 %    'local' : Set it it 'local' if you want to use the processors
 %              available in local PC.
 %    default : '' no pool for parallel computing.
-%   
+%
 %   'reportLineWidth': Line width of report lines. Actually it defines
 %    the width of the first part of the lines.
 %    default : 60
@@ -85,10 +88,10 @@ function out = tscu(x,y,varargin)
 %   'DisplayAlignment': Display alignment for the specified instances
 %    defined as {trnidx, tstidx}
 %    default : {[],[]} (means no alignment is displayed)
-%    example : tscu(trn,tst,'DisplayAlignment',{[1 3],[1]}) will display the 
-%    alignment of test sample 1 to the training samples 1 and 3, so 
+%    example : tscu(trn,tst,'DisplayAlignment',{[1 3],[1]}) will display the
+%    alignment of test sample 1 to the training samples 1 and 3, so
 %    two alignments will be displayed.
-%    
+%
 %    The figures will be saved in PDF on the current directory.
 %
 %   'DumpDistanceMatrix': Dump the distance matrix ta a txt file.
@@ -99,10 +102,11 @@ function out = tscu(x,y,varargin)
 %   Z = TSCU(...) returns output values in the structure Z.
 %
 
-% I'm adding this small library of Oliver Woodford to produce PDFs 
-% ready for publication It's license allows me to include it. 
+% I'm adding this small library of Oliver Woodford to produce PDFs
+% ready for publication It's license allows me to include it.
 % See lib/export_fig/license.txt
 addpath('lib/export_fig');
+addpath('lib/creg');
 
 options = getDefaultOptions;
 if nargin == 0
@@ -114,7 +118,7 @@ elseif nargin == 1
 elseif nargin == 2,
     if size(x,2) ~= size(y,2)
         error('tscu:invalidlength',...
-	 'Length of time series in training and testing sets should be equal');
+            'Length of time series in training and testing sets should be equal');
     end
 end
 
@@ -128,14 +132,14 @@ else
                 options.classifier = varargin{i+1};
             case 'Alignment'
                 options.alignment = varargin{i+1};
+            case 'SVMKernel'
+                options.svmkernel = varargin{i+1};
             case 'DTWbandwidth'
                 options.DTWbandwidth = varargin{i+1};
             case 'LogLevel'
                 options.loglevel = varargin{i+1};
             case 'MATLABPool'
                 options.MATLABPool = varargin{i+1};
-            case 'SAGACostFunction'
-                options.SAGACostFunction = varargin{i+1};
             case 'SAGAOptimizationMethod'
                 options.SAGAOptimizationMethod = varargin{i+1};
             case 'SAGABaseLength'
@@ -145,7 +149,7 @@ else
             case 'CrossValidation'
                 options.CrossValidation = varargin{i+1};
             case 'DisplayInputData'
-		        options.DisplayInputData = varargin{i+1};    
+                options.DisplayInputData = varargin{i+1};
             case 'DisplayAlignment'
                 options.DisplayAlignment = varargin{i+1};
             case 'DumpDistanceMatrix'
@@ -162,17 +166,48 @@ end
 
 if options.SAGABaseLength ~= length(options.SAGAInitialSolution)
     displine('Warning','Size of initial solution should be',...
-     sprintf('%d',length(options.SAGABaseLength)),options);
+        sprintf('%d',length(options.SAGABaseLength)),options);
 end
 
 % Check the optimization method
 switch options.SAGAOptimizationMethod
     case 'GA'
     case 'Simplex'
+    case 'GA_MEX'
     otherwise
         displine('Warning',sprintf('The method "%s" is not recognized',...
-         options.SAGAOptimizationMethod),'GA will be used',options);
-        options.SAGAOptimizationMethod = 'GA';
+            options.SAGAOptimizationMethod),'GA_MEX will be used',options);
+        options.SAGAOptimizationMethod = 'GA_MEX';
+end
+
+switch options.alignment
+    case 'NONE'
+        options.alignmentfunction = @nonealignment;
+    case 'DTW'
+        options.alignmentfunction = @dtwalignment;
+    case 'CDTW'
+        options.alignmentfunction = @cdtwalignment;
+    case 'SAGA'
+        options.alignmentfunction = @sagaalignment;
+        n = size(x,2)-1;
+        k = options.SAGABaseLength;
+        options.SAGAz = zeros(1,n);
+        options.SAGAw = zeros(1,n);
+        options.SAGAs = zeros(1,k);
+        options.SAGAsbest = zeros(1,k);
+        u = zeros(n,k);
+        nk = round(n/k);
+        lastpiece = n-nk*k;
+        for i=0:k-2
+            u(nk*i+1:nk*i+nk,i+1)=1;
+        end
+        u(n-lastpiece-1:n,k)=1;
+        integration    = @(s) cumsum(s)/(size(s,1)-1);
+        options.SAGAbmat = integration(integration(u));        
+    case 'CREG'
+        options.alignmentfunction = @cregalignment;
+    otherwise
+        options.alignmentfunction = @nonealignment;
 end
 
 % Display some debug
@@ -181,6 +216,9 @@ displine('Info','Size of testing set',sprintf('%d',size(y,1)),options);
 displine('Info','Time series length',sprintf('%d',size(x,2)-1),options);
 
 displine('Info','Classification method',options.classifier,options);
+if strcmp(options.classifier,'SVM')
+    displine('Info','SVM kernel type',options.svmkernel,options);
+end
 displine('Info','Alignment method',options.alignment,options);
 displine('Info','Displaying input data',options.DisplayInputData,options);
 
@@ -193,16 +231,15 @@ else
 end
 if strcmp(options.alignment,'SAGA')
     displine('Info','SAGA number of spline bases',...
-     sprintf('%d',options.SAGABaseLength),options);
+        sprintf('%d',options.SAGABaseLength),options);
     displine('Info','SAGA optimization method',...
-     options.SAGAOptimizationMethod,options);
+        options.SAGAOptimizationMethod,options);
     displine('Info','SAGA initial solution',...
-     sprintf('%5.2f ',options.SAGAInitialSolution),options);
-    displine('Info','SAGA cost function',options.SAGACostFunction,options);
+        sprintf('%5.2f ',options.SAGAInitialSolution),options);
 end
 if strcmp(options.alignment,'CDTW')
     displine('Info','DTW band width (%)',...
-     sprintf('%5.2f',options.DTWbandwidth),options);
+        sprintf('%5.2f',options.DTWbandwidth),options);
 end
 if ~isempty(options.MATLABPool)
     displine('Info','MATLAB Pool',options.MATLABPool,options);
@@ -231,6 +268,8 @@ tic
 switch options.classifier
     case 'K-NN'
         labels = nnclassifier(x,y,options);
+    case 'SVM'
+        labels = svmclassifier(x,y,options);
     otherwise
         labels = nnclassifier(x,y,options);
 end
@@ -246,7 +285,7 @@ displine('Info','Kappa',sprintf('%-8.3f',perf.kappa),options);
 displine('Info','Z-value',sprintf('%-8.3f',perf.Z),options);
 displine('Info','Confusion matrix',sprintf('\n%s',perf.confmatdisplay),options);
 displine('Info','Classification time (sec)',...
- sprintf('%-8.2f',classification_time),options);
+    sprintf('%-8.2f',classification_time),options);
 
 % Closing the MATLAB pool if paralel process
 if ~isempty(options.MATLABPool)
@@ -255,7 +294,10 @@ if ~isempty(options.MATLABPool)
 end
 
 % Returning output
-out.labels = labels;
+out.labels              = labels;
+out.truelabels          = y(:,1);
+out.classification_time = classification_time;
+out.perf                = perf;
 displine('Info','The end of TSCU','FINISHED',options);
 end
 
@@ -265,11 +307,11 @@ function displayClassInfo(x,y,options)
 uniquelabels=unique([x(:,1);y(:,1)]);
 % For each class
 for i=1:length(uniquelabels)
-    trnidx = uniquelabels(i)==x(:,1); 
-    tstidx = uniquelabels(i)==y(:,1); 
+    trnidx = uniquelabels(i)==x(:,1);
+    tstidx = uniquelabels(i)==y(:,1);
     displine('Info','Class information',...
         sprintf('%d [TRN:%3d TST:%3d]',uniquelabels(i),sum(trnidx),sum(tstidx)),options);
-
+    
 end
 end
 
@@ -279,19 +321,19 @@ function displayInputData(x,y,options)
 uniquelabels=unique([x(:,1);y(:,1)]);
 % For each class
 for i=1:length(uniquelabels)
-    trnidx = uniquelabels(i)==x(:,1); 
-    tstidx = uniquelabels(i)==y(:,1); 
+    trnidx = uniquelabels(i)==x(:,1);
+    tstidx = uniquelabels(i)==y(:,1);
     
     
     figure
     subplot(121);
     plot(x(trnidx,2:end)','k');
     title(sprintf('Class index: %d [TRN:%d]',...
-     uniquelabels(i),sum(trnidx)));
+        uniquelabels(i),sum(trnidx)));
     subplot(122);
     plot(y(tstidx,2:end)','k');
     title(sprintf('Class index: %d [TST:%d]',...
-     uniquelabels(i),sum(tstidx)));
+        uniquelabels(i),sum(tstidx)));
 end
 end
 
@@ -299,20 +341,21 @@ function options = getDefaultOptions(varargin)
 % Please see help tscu for available options.
 
 options.classifier               = 'K-NN';
-options.alignment                = 'None';
+options.alignment                = 'NONE';
 options.loglevel                 = 'Info';
+options.svmkernel                = 'linear';
 options.reportLineWidth          = 40;
 options.trainingRatio            = 0.3;
 options.DTWbandwidth             = 6;
 options.MATLABPool               = '';
-options.SAGACostFunction        = 'Jcost0';
-options.SAGAOptimizationMethod  = 'GA';
+options.SAGAOptimizationMethod  = 'GA_MEX';
 options.SAGABaseLength          = 8;
 options.SAGAInitialSolution     = zeros(1,options.SAGABaseLength);
 options.DisplayInputData        = 'no';
 options.CrossValidation         = 0;
 options.DisplayAlignment        = {[],[]};
 options.DumpDistanceMatrix      = 'no';
+options.alignmentfunction       = @nonealignment;
 if nargin > 0 && mod(nargin,2) ~= 0
     error('tscu:invalidoption','The number of input variables must be even');
 end
@@ -324,8 +367,8 @@ function displine(l,k,v,o)
 %   the parameters in O if current loglevel is less than or equal to
 %   logvel K. For example, DISPLINE('Info','Length',12,options)
 %   will display
-%   Length.......................: 12 
-%   if the current log level option is 'Info' or 'Debug'. 
+%   Length.......................: 12
+%   if the current log level option is 'Info' or 'Debug'.
 %   See options.loglevel setting.
 
 if getloglevelindex(l) <= getloglevelindex(o.loglevel)
@@ -343,22 +386,22 @@ function i = getloglevelindex(l)
 %   GETLOGLEVELINDEX(L) gets the corresponding integer for a given
 %   log level L.
 switch l
-    case 'Emergency' 
+    case 'Emergency'
         i = 0;
     case 'Alert'
         i = 1;
-    case 'Critical' 
+    case 'Critical'
         i = 2;
     case 'Error'
-        i = 3; 
-    case 'Warning' 
+        i = 3;
+    case 'Warning'
         i = 4;
     case 'Notice'
         i = 5;
-    case 'Info' 
+    case 'Info'
         i = 6;
     case 'Debug'
-        i = 7; 
+        i = 7;
     otherwise
         i = 6;
 end
@@ -399,7 +442,7 @@ end
 
 function labels = nnclassifier(x,y,options)
 %NNCLASSIFIER Nearest Neighbor Classification
-%   LABELS = NNCLASSIFIER(X,Y,OPTIONS) classifies the time series in 
+%   LABELS = NNCLASSIFIER(X,Y,OPTIONS) classifies the time series in
 %   testing set Y by using the time series in training set X with the
 %   nearest neighbor algorithm resulting estimated labels LABELS.
 xlabels = x(:,1);
@@ -414,30 +457,32 @@ DisplayAlignmentMat = zeros(n,m);
 DisplayAlignmentMat(options.DisplayAlignment{1},options.DisplayAlignment{2})=1;
 
 % It may seem awkward not to use two inner loops for a simple
-% K-NN classifier. The reason is that I should use just one loop 
-% to easily distribute the job. 
-parfor i = 1 : n*m
-        yObject = y(yIdx(i),2:end); 
-        xObject = x(xIdx(i),2:end);
-        path1 = 1:numel(xObject); 
-        path2 = 1:numel(yObject);
-        switch Alignment
-            case 'None'
-                alldistances(i) = sqrt(sum((xObject - yObject).^2)); 
-            case 'DTW'
-                [alldistances(i), path1, path2] = dtwalignment(xObject,yObject);
-            case 'CDTW'
-                [alldistances(i), path1, path2] = cdtwalignment(xObject,yObject,options);
-            case 'SAGA'
-                [alldistances(i), path1, path2] = sagaalignment(xObject,yObject,options);
-            otherwise
-                alldistances(i) = sqrt(sum((xObject - yObject).^2));
-        end
-        displine('Debug',sprintf('[%5d of %5d] dist(%4d,%4d)',i,n*m,yIdx(i),xIdx(i)),...
-            sprintf('%f',alldistances(i)),options);
-        if DisplayAlignmentMat(i)
-            displayAlignment(x,y,xIdx(i),yIdx(i),path1,path2,Alignment,options)
-        end
+% K-NN classifier. The reason is that I should use just one loop
+% to easily distribute the job.
+for i = 1 : n*m
+    yObject = y(yIdx(i),2:end);
+    xObject = x(xIdx(i),2:end);
+    path1 = 1:numel(xObject);
+    path2 = 1:numel(yObject);
+    switch Alignment
+        case 'NONE'
+            [alldistances(i), path1, path2] = nonealignment(xObject,yObject,options);
+        case 'DTW'
+            [alldistances(i), path1, path2] = dtwalignment(xObject,yObject,options);
+        case 'CDTW'
+            [alldistances(i), path1, path2] = cdtwalignment(xObject,yObject,options);
+        case 'SAGA'
+            [alldistances(i), path1, path2] = sagaalignment(xObject,yObject,options);
+        case 'CREG'
+            [alldistances(i), path1, path2] = cregalignment(xObject,yObject,options);
+        otherwise
+            [alldistances(i), path1, path2] = nonealignment(xObject,yObject,options);
+    end
+    displine('Debug',sprintf('[%5d of %5d] dist(%4d,%4d)',i,n*m,yIdx(i),xIdx(i)),...
+        sprintf('%f',alldistances(i)),options);
+    if DisplayAlignmentMat(i)
+        displayAlignment(x,y,xIdx(i),yIdx(i),path1,path2,Alignment,options)
+    end
 end
 distancematrix = reshape(alldistances,n,m);
 [dummy, mindistanceIdx]=min(distancematrix);
@@ -453,90 +498,211 @@ end
 
 end
 
+function labels = svmclassifier(x,y,options)
+%SVMCLASSIFIER Support Vector Machine Classification
+%   LABELS = SVMCLASSIFIER(X,Y,OPTIONS)
+
+classlabels=unique(sort(x(:,1)));
+m=length(classlabels);
+tstlabels=zeros(size(y,1),(m-1)*m/2);
+
+opt=optimset('maxiter',500,'largescale','off','display','off');
+% One against one approach
+k=1;
+for i=1:m-1
+    for j=i+1:m
+        % Training
+        class_one=x(x(:,1)==classlabels(i),2:end);
+        class_two=x(x(:,1)==classlabels(j),2:end);
+        objects=[class_one;class_two];
+        truelabels=[-ones(size(class_one,1),1);ones(size(class_two,1),1)];
+        displine('Debug','SVM one-against-one',...
+            sprintf('class %2d .vs. class %2d',classlabels(i),classlabels(j)),options);
+        nx=size(objects,1);
+        xlen=size(objects,2);
+        R=zeros(nx,nx);
+        e=1e-6;
+        C=10;                               %Functional Trade-off
+
+        
+        switch options.svmkernel
+            case 'linear'
+                if strcmp(options.alignment,'NONE')
+                    R=objects*objects';
+                else
+                    for ii=1:nx-1
+                        for jj=ii+1:nx
+                            [distance, path1, path2]=options.alignmentfunction(objects(ii,:),objects(jj,:),options);
+                            xAligned = interp1(1:xlen,objects(ii,:),path1);
+                            yAligned = interp1(1:xlen,objects(jj,:),path2);
+                            displine('Debug','Aligning',sprintf('%5d .vs. %5d',ii,jj),options);
+                            R(ii,jj)=xAligned*yAligned';
+                            R(jj,ii)=R(ii,jj);
+                        end
+                    end
+                    for ii=1:nx
+                        R(ii,ii)=objects(ii,:)*objects(ii,:)';
+                    end
+                end
+            case 'gaussian'
+                sigma=1;       % Parameter of the kernel
+                D=buffer(sum([kron(objects,ones(nx,1))...
+                  - kron(ones(1,nx),objects')'].^2,2),nx,0);
+                R=exp(-D/(2*sigma)); % Kernel Matrix               
+        end      
+        
+        Y=diag(truelabels);
+        H=Y*R*Y+1e-6*eye(length(truelabels));         %Matrix H regularized
+        f=-ones(size(truelabels)); a=truelabels'; K=0;
+        Kl=zeros(size(truelabels));
+        Ku=C*ones(size(truelabels));
+        alpha=quadprog(H,f,[],[],a,K,Kl,Ku,[],opt); %Solver
+        
+        switch options.svmkernel
+            case 'linear'
+                w=objects'*(alpha.*truelabels);               
+                %ind=find(alpha>e & alpha<=C-e);
+                ind=find(alpha<C);
+                b=mean(truelabels(ind) - objects(ind,:)*w);
+                % Testing
+                tstvalues=y(:,2:end)*w+b;
+                
+                %figure
+                %subplot(121)
+                %plot(alpha,'.');
+                %title(sprintf('%d %d',i,j));
+                %subplot(122);
+                %plot(eig(H),'.');
+                
+
+            case 'gaussian'
+                ind=find(alpha>e);
+                x_sv=objects(ind,:);    % Extraction of the
+                                         % support vectors
+                N_SV=length(ind); 
+                ind=find(alpha>e & alpha<C-e);
+                N_margin=length(ind);
+                D=buffer(sum([kron(x_sv,ones(N_margin,1))...
+                 - kron(ones(1,N_SV),objects(ind,:)')'].^2,2),N_margin,0);
+                R_margin=exp(-D/(2*sigma));
+                y_margin=R_margin*(truelabels(ind).*alpha(ind));
+                b=mean(truelabels(ind) - y_margin); 
+                
+                N_test=size(y,1);                
+                D=buffer(sum([kron(x_sv,ones(N_test,1))...
+                 - kron(ones(1,N_SV),y(:,2:end)')'].^2,2),N_test,0);
+                R_test=exp(-D/(2*sigma));
+                tstvalues=R_test*(truelabels(ind).*alpha(ind))+b;
+        end
+        tstlabels(tstvalues< 0,k)=classlabels(i);
+        tstlabels(tstvalues>=0,k)=classlabels(j);
+        k = k + 1;
+    end
+end
+labels=mode(tstlabels,2);
+
+displine('Info','index of testing objects',sprintf('%3d ',1:size(y,1)),options);
+displine('Info','labels of testing objects (True)',sprintf('%3d ',y(:,1)),options);
+displine('Info','labels of testing objects (Estimated)',sprintf('%3d ',labels),options);
+%displine('Info','closest training objects',sprintf('%3d ',mindistanceIdx),options);
+
+end
+
 function  displayAlignment(x,y,xIdx,yIdx,path1,path2,Alignment,options)
 %DISPLAYALIGNMENT Displays the aligned time series
 %   DISPLAYALIGNMENT(x,y,xIdx,yIdx,path1,path2,Alignment,options) will
 %   display the alignment between the time series x(xIdx,2:end))
 %   and y(yIdx,2:end)) by using the determined warpings path1 and path2
 %   found by the alignment method Alignment.
-    xObject = x(xIdx,2:end);
-    yObject = y(yIdx,2:end);
-    xAligned = xObject(path1);
-    yAligned = yObject(path2);
-    
-    nx = numel(xObject);
-    xmin = min(xObject);
-    xmax = max(xObject);
+xObject = x(xIdx,2:end);
+yObject = y(yIdx,2:end);
+xAligned = interp1(1:length(xObject),xObject,path1);
+yAligned = interp1(1:length(yObject),yObject,path2);
 
-    ny = numel(yObject);
-    ymin = min(yObject);
-    ymax = max(yObject);
-    
-    dx = 10;
-    if nx < 30
-        dx = nx;
-    end
-    xgrid=round(linspace(1,nx,dx));
-    ygrid=round(linspace(1,ny,dx));
-    
-    relErrBefore = norm(xObject - yObject)/norm(xObject);
-    relErrAfter  = norm(xAligned - yAligned)/norm(xAligned);
-    
-    figure('Visible','on');
-    plot(xObject,'b');
-    hold on;
-    plot(yObject,'r');
-    %legend(sprintf('TRN %d',xIdx),sprintf('TST %d',yIdx));
-    legend('Training','Testing');
-    
-    title(sprintf('Originals Distance: %8.5f',relErrBefore));
-    export_fig('-pdf','-transparent',...
-        sprintf('tscu_alignment_%03d_%03d_%s_before.pdf',xIdx,yIdx,Alignment));
+nx = numel(xObject);
+xmin = min(xObject);
+xmax = max(xObject);
 
-    figure('Visible','on');
-    plot(xAligned,'b');
-    hold on;
-    plot(yAligned,'r');
-    %legend(sprintf('TRN %d',xIdx),sprintf('TST %d',yIdx));
-    legend('Training','Testing');
-    title(sprintf('Alignment (%s) Distance: %8.5f',Alignment,relErrAfter)); 
-    export_fig('-pdf','-transparent',...
-        sprintf('tscu_alignment_%03d_%03d_%s_after.pdf',xIdx,yIdx,Alignment));
-    
-    figure('Visible','on');
-    plot(path1,path2,'b');
+ny = numel(yObject);
+ymin = min(yObject);
+ymax = max(yObject);
+
+dx = 10;
+if nx < 30
+    dx = nx;
+end
+xgrid=round(linspace(1,nx,dx));
+ygrid=round(linspace(1,ny,dx));
+
+relErrBefore = norm(xObject - yObject)/norm(xObject);
+relErrAfter  = norm(xAligned - yAligned)/norm(xAligned);
+
+figure('Visible','on');
+plot(xObject,'b');
+hold on;
+plot(yObject,'r');
+legend('Training','Testing');
+title(sprintf('Originals Distance: %8.5f',relErrBefore));
+xlim([1 max([nx ny])]);
+%export_fig('-pdf','-transparent',...
+%    sprintf('tscu_alignment_%03d_%03d_%s_before.pdf',xIdx,yIdx,Alignment));
+
+figure('Visible','on');
+plot(xAligned,'b');
+hold on;
+plot(yAligned,'r');
+legend('Training','Testing');
+title(sprintf('Alignment (%s) Distance: %8.5f',Alignment,relErrAfter));
+xlim([1 length(xAligned)]);
+%export_fig('-pdf','-transparent',...
+%    sprintf('tscu_alignment_%03d_%03d_%s_after.pdf',xIdx,yIdx,Alignment));
+
+% warping is scaled to [0 1]
+figure('Visible','on');
+%plot((path1-1)/(length(path1)-1),(path2-1)/(length(path2)-1),'b');
+plot(path1,path2,'b');
+hold on
+plot(nx*0.20*((xObject-xmin)/(xmax-xmin)-1),'r');
+plot(ny*0.20*((yObject-ymin)/(ymax-ymin)-1),1:ny,'r');
+set(gca,'XTick',[],'YTick',[])
+box on
+plot(xgrid,meshgrid(xgrid,ygrid),'k:');
+plot(meshgrid(xgrid,ygrid),ygrid,'k:');
+
+if strcmp(Alignment,'CDTW')
+    band=floor(options.DTWbandwidth*nx/100);
+    plot([1 1    nx-band nx],[1 band ny      ny],'k');
+    plot([1 band nx      nx],[1 1    ny-band ny],'k');
+end
+
+axis equal
+xlim([-nx*0.20 nx+1]);
+ylim([-ny*0.20 ny+1]);
+%export_fig('-pdf','-transparent',...
+%    sprintf('tscu_alignment_%03d_%03d_%s_warping.pdf',xIdx,yIdx,Alignment));
+
+figure('Visible','on');
+for i=round(linspace(1,length(path1),50))
+    plot([path1(i) path2(i)], ...
+        [interp1(1:nx,xObject,path1(i)) interp1(1:ny,yObject,path2(i))+2*xmax],'k');
     hold on
-    plot(nx*0.20*((xObject-xmin)/(xmax-xmin)-1),'r');
-    plot(ny*0.20*((yObject-ymin)/(ymax-ymin)-1),1:ny,'r');
-    set(gca,'XTick',[],'YTick',[])
-    box on
-    plot(xgrid,meshgrid(xgrid,ygrid),'k:');
-    plot(meshgrid(xgrid,ygrid),ygrid,'k:');
-    
-    
-    if strcmp(Alignment,'CDTW')
-        band=floor(options.DTWbandwidth*nx/100);
-        plot([1 1    nx-band nx],[1 band ny      ny],'k');
-        plot([1 band nx      nx],[1 1    ny-band ny],'k');
-    end
-    
-    axis equal
-    xlim([-nx*0.20 nx+1]);
-    ylim([-ny*0.20 ny+1]);
-    export_fig('-pdf','-transparent',...
-        sprintf('tscu_alignment_%03d_%03d_%s_warping.pdf',xIdx,yIdx,Alignment));
-    
-    figure('Visible','on');
-    for i=round(linspace(1,length(path1),50))
-        plot([path1(i) path2(i)], [xObject(path1(i)) yObject(path2(i))+2*xmax],'k'); hold on 
-    end
-    plot(xObject,'b');
-    plot(2*xmax+yObject','b');
-    xlim([0 nx]);
-    set(gca,'XTick',[],'YTick',[])
-    box on
-    export_fig('-pdf','-transparent',...
-        sprintf('tscu_alignment_%03d_%03d_%s_warpingLines.pdf',xIdx,yIdx,Alignment));    
+end
+plot(xObject,'b');
+plot(2*xmax+yObject','b');
+xlim([0 nx]);
+set(gca,'XTick',[],'YTick',[])
+box on
+%export_fig('-pdf','-transparent',...
+%    sprintf('tscu_alignment_%03d_%03d_%s_warpingLines.pdf',xIdx,yIdx,Alignment));
+end
+
+function [distance, path1, path2] = nonealignment(x,y,options)
+%NONEALIGNMENT Does nothing but a trivial alignment
+%   [DISTANCE PATH1 PATH2]=NONEALIGNMENT(X,Y,OPTIONS) produces
+%   a trivial alignment in which warping is a simple line.
+path1 = 1:length(x);
+path2 = 1:length(y);
+distance = sqrt(sum((x - y).^2));
 end
 
 function [distance, path1, path2] = sagaalignment(x,y,options)
@@ -544,47 +710,79 @@ function [distance, path1, path2] = sagaalignment(x,y,options)
 %   [DISTANCE PATH1 PATH2]=SAGAALIGNMENT(X,Y,OPTIONS) aligns
 %   the objects X and Y using available options OPTIONS and returns
 %   the distance in DISTANCE and warping paths in PATH1 and PATH2.
-        t=linspace(0,1,length(x));
 
-        switch options.SAGACostFunction
-            case 'Jcost0'
-                J = @(s) Jcost0(y,x,s,t);
-            case 'Jcost1'
-                J = @(s) Jcost1(y,x,s);
-            otherwise
-                displine('Warning',sprintf('Cost function "%s" is not defined. Using ',...
-                    options.SAGACostFunction),'Jcost0',options);
-                J = @(s) Jcost0(y,x,s,t);
-        end
-        
-        switch options.SAGAOptimizationMethod
-            case 'GA'
-                gaoptions = gaoptimset('Generations',100,...
-                    'TolFun', eps, ...
-                    'StallGenLimit',40,...
-                    'Display','off',...
-                    'PopulationSize',20,...
-                    'PopInitRange',1*[-1;1]);
-                [sbest, distance]=ga(J,options.SAGABaseLength,[],[],[],[],-10,10,[],gaoptions);
-            case 'Simplex'
-                [sbest, distance] = fminsearch(J,options.SAGAInitialSolution);
-            otherwise
-                displine('Warning',sprintf('Optimization function "%s" is not defined. Using',...
-                    options.SAGAOptimizationMethod),'GA',options);
-                [sbest, distance]=ga(J,options.SAGABaseLength);
-        end
-        path1 = 1:length(x);
-        path2 = round(interp1(t,1:length(y),ramsay(t,sbest)));
-        path2(path2<1)=1;
-        path2(path2>length(y))=length(y);
+J = @(s) tscu_saga_cost(x,y,s,options.SAGAw,options.SAGAz);
+switch options.SAGAOptimizationMethod
+    case 'GA'
+        gaoptions = gaoptimset('Generations',100,...
+            'TolFun', eps, ...
+            'StallGenLimit',40,...
+            'Display','off',...
+            'PopulationSize',20,...
+            'PopInitRange',1*[-1;1]);
+        [sbest, distance]=ga(J,options.SAGABaseLength,[],[],[],[],-2,2,[],gaoptions);
+	[~,path2] = tscu_saga_warp(y,sbest);
+	path1=1:length(x);
+    case 'Simplex'
+        [sbest, distance] = fminsearch(J,options.SAGAInitialSolution);
+        [~, path2] = tscu_saga_warp(y,sbest);
+        path1=1:length(x);
+    case 'GA_MEX'
+	[path1, path2, distance]=tscu_saga_register(x,y,options.SAGABaseLength,...
+    		options.SAGAz,...
+    		options.SAGAw,...
+    		options.SAGAs,...
+    		options.SAGAsbest,...
+            options.SAGAbmat');
+    otherwise
+        displine('Warning',sprintf('Optimization function "%s" is not defined. Using',...
+            options.SAGAOptimizationMethod),'GA',options);
+	[path1, path2, distance]=tscu_saga_register(x,y,options.SAGABaseLength,...
+    		options.SAGAz,...
+    		options.SAGAw,...
+    		options.SAGAs,...
+    		options.SAGAsbest,...
+            options.SAGAbmat');
+end
 end
 
-function [distance,path1,path2] = dtwalignment(x,y)
+function [distance, path1, path2] = cregalignment(x,y,options)
+%CREGALIGNMENT Curve Registration of Ramsay & Silverman
+%   [DISTANCE PATH1 PATH2]=CREGALIGNMENT(X,Y,OPTIONS) aligns
+%   the objects X and Y using available options OPTIONS and returns
+%   the distance in DISTANCE and warping paths in PATH1 and PATH2.
+nx = length(x);
+ny = length(y);
+nbasis = 10;
+norder = 6;
+basis = create_bspline_basis([1,nx], nbasis, norder);
+xfd = data2fd(x, 1:nx, basis);
+yfd = data2fd(y, 1:ny, basis);
+
+nwbasis = 4;
+nworder = 3;
+wbasis = create_bspline_basis([1,nx], nwbasis, nworder);
+Wfd0 = fd(zeros(nwbasis,1), wbasis);
+
+[yfdnew,dummy,warpfd] = registerfd(xfd, yfd, Wfd0);
+
+ynew = eval_fd(yfdnew, 1:ny);
+warpvec = eval_mon(1:nx, warpfd);
+warpvec = warpvec/max(warpvec);
+
+path1 = 1:nx;
+path2 = 1 + warpvec'/max(warpvec)*(nx-1);
+
+distance = sqrt(sum((ynew'-x).^2));
+end
+
+
+function [distance,path1,path2] = dtwalignment(x,y,options)
 %DTWALIGNMENT Dynamic Time Warping alignment
 %   [DISTANCE PATH1 PATH2]=DTWALIGNMENT(X,Y,OPTIONS) aligns
 %   the objects X and Y using available options OPTIONS and returns
 %   the distance in DISTANCE and warping paths in PATH1 and PATH2.
-[distance,path1, path2]=dtw(x,y,length(x));
+[distance,path1, path2]=tscu_dtw(x,y,length(x));
 path1 = fliplr(path1);
 path2 = fliplr(path2);
 end
@@ -594,7 +792,7 @@ function [distance, path1, path2] = cdtwalignment(x,y,options)
 %   [DISTANCE PATH1 PATH2]=CDTWALIGNMENT(X,Y,OPTIONS) aligns
 %   the objects X and Y using available options OPTIONS and returns
 %   the distance in DISTANCE and warping paths in PATH1 and PATH2.
-[distance, path1, path2]=dtw(x,y,floor(options.DTWbandwidth*length(x)/100));
+[distance, path1, path2]=tscu_dtw(x,y,floor(options.DTWbandwidth*length(x)/100));
 path1 = fliplr(path1);
 path2 = fliplr(path2);
 end
@@ -663,12 +861,12 @@ for i=1:n
 end
 confmatdisplay=sprintf('%s%5s ',confmatdisplay,'PA');
 for j=1:n
-        confmatdisplay=sprintf('%s%5.3f ',confmatdisplay,PA(j));
+    confmatdisplay=sprintf('%s%5.3f ',confmatdisplay,PA(j));
 end
 confmatdisplay=sprintf('%s\n',confmatdisplay);
 confmatdisplay=sprintf('%s%5s ',confmatdisplay,'TO');
 for j=1:n
-        confmatdisplay=sprintf('%s%5d ',confmatdisplay,sum(confmat(:,j)));
+    confmatdisplay=sprintf('%s%5d ',confmatdisplay,sum(confmat(:,j)));
 end
 confmatdisplay=sprintf('%s%5s %5d ',confmatdisplay,'',sum(confmat(:)));
 confmatdisplay=sprintf('%s\n',confmatdisplay);
@@ -683,4 +881,3 @@ perf.confmat = confmat;
 perf.confmatdisplay = confmatdisplay;
 
 end
-
