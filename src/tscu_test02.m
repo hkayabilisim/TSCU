@@ -1,45 +1,48 @@
-%% Time Series Classification Utility (TSCU) test suite.
-% The test runs TSCU with settings on artifical dataset. This time we use 
-% |DisplayInputData| option to see the input time series.
+%% TSCU test suite: 02
+% This test runs Time Series Classification Utility (TSCU) with 
+% |DisplayInputData| option set to |yes| in order to display the input 
+% data. 
 %
 % * Author : Huseyin Kaya
-% * Website: <http://tscu.blogspot.com>
+% * Website: <http://timewarping.org>
 % * Sources: <https://github.com/hkayabilisim/TSCU>
 
+%% Initialization
+% I prefer to clear and close everything to stay out of any nonsense.
 clear all
 close all
 clc
 
-%% Creating a toy dataset
-% Let's create 4 time series with two different classes: 1 and 2. First
-% class represents a sine wave, whereas the later represents a cosine wave.
+%% Creating a toy example
+% Let's create 4 time series with two different classes: sine and cosine.
 % We also deviced an artifical change within the same class time series by
 % warping the time axis with w(t)=t^2.
-% 
 %
-%   Name  Function       Class
-%   a     sin(2*pi*t)    1  
-%   b     sin(2*pi*t*t)  1
-%   c     cos(2*pi*t)    2
-%   d     cos(2*pi*t*t)  2
+%   Name  Function       Class  Set
+%   ----  --------       -----  --------
+%   a     sin(2*pi*t)    1      Training
+%   b     sin(2*pi*t*t)  1      Testing
+%   c     cos(2*pi*t)    2      Training
+%   d     cos(2*pi*t*t)  2      testing
 %
-% If you have UCR data available, then load it as following:
-%
-%   trn=load('synthetic_control_TRAIN');
-%   tst=load('synthetic_control_TEST');
-%
+% tst and trn vectors contain both the time series and their class labels.
 t = linspace(0,1,29);
-a=sin(2*pi*t); b=sin(2*pi*t.^2);
-c=cos(2*pi*t); d=cos(2*pi*t.^2);
-tst = [ 1 a ; 2 c];
-trn = [ 1 b ; 2 d];
-
-
+a = sin(2*pi*t); 
+b = sin(2*pi*t.^2);
+c = cos(2*pi*t); 
+d = cos(2*pi*t.^2);
+trn = [ 1 a ; 2 c];
+tst = [ 1 b ; 2 d];
 
 %% Running TSCU
-% We run with default settings which means, no alignment is applied. You
-% will see in the confusion matrix that a misclassification will occur.
-% Therefore overall classification accuracy is 0.5.
+% We run TSCU with default settings except |DisplayInputData| option set to 
+% yes. In this way, we have the opportunity to observe the input data. You
+% can see all the four time series. The first two are the same class
+% (since wave) but the second one is sligtly different. Namely the time
+% domain of the second time series has warped by using the warping function 
+% of t^2. Similary story applied to the other class (cosine wave).
 %
-% This time, let's display input data.
+% If we had more than one time series for each set (training or testing),
+% all of them will be plotted on top of each other.
 tscu(trn,tst,'DisplayInputData','yes');
+

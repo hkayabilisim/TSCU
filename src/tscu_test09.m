@@ -1,49 +1,59 @@
-%% Time Series Classification Utility (TSCU) test suite.
-% The test runs TSCU in default settings. 
+%% TSCU test suite: 09
+% In this test we user the curve registration technique
+% developed by J. O. Ramsay & X. C. Li published on the 
+% following paper:
+%
+% * 1998. Curve registration, Journal of the Royal Statistical Society 
+%   Series  B-statistical Methodology, 60(Part 2), 351?363.
+%
+% Ramsay published the related codes on
+% http://www.psych.mcgill.ca/misc/fda. Since the codes are published under 
+% GPL, I include them in TSCU's 'lib' folder so that you don't need 
+% a separate download. 
 %
 % * Author : Huseyin Kaya
-% * Website: <http://web.itu.edu.tr/huseyinkaya/tscu>
+% * Website: <http://timewarping.org>
 % * Sources: <https://github.com/hkayabilisim/TSCU>
 
+%% Initialization
+% As always, I begin with clearing everything to stay out of any nonsense.
 clear all
 close all
 clc
 
-%% Creating a toy dataset
-% Let's create 4 time series with two different classes: 1 and 2. First
-% class represents a sine wave, whereas the later represents a cosine wave.
+%% Creating a toy example
+% Let's create 4 time series with two different classes: sine and cosine.
 % We also deviced an artifical change within the same class time series by
 % warping the time axis with w(t)=t^2.
-% 
 %
-%   Name  Function       Class
-%   a     sin(2*pi*t)    1  
-%   b     sin(2*pi*t*t)  1
-%   c     cos(2*pi*t)    2
-%   d     cos(2*pi*t*t)  2
+%   Name  Function       Class  Set
+%   ----  --------       -----  --------
+%   a     sin(2*pi*t)    1      Training
+%   b     sin(2*pi*t*t)  1      Testing
+%   c     cos(2*pi*t)    2      Training
+%   d     cos(2*pi*t*t)  2      testing
 %
-% If you have UCR data available, then load it as following:
-%
-%   trn=load('synthetic_control_TRAIN');
-%   tst=load('synthetic_control_TEST');
-%
+% |tst| and |trn| vectors contain both the time series and their class 
+% labels. 
 t = linspace(0,1,29);
-a=sin(2*pi*t); b=sin(2*pi*t.^2);
-c=cos(2*pi*t); d=cos(2*pi*t.^2);
-tst = [ 1 a ; 2 c];
-trn = [ 1 b ; 2 d];
+a = sin(2*pi*t); 
+b = sin(2*pi*t.^2);
+c = cos(2*pi*t); 
+d = cos(2*pi*t.^2);
+trn = [ 1 a ; 2 c];
+tst = [ 1 b ; 2 d];
 
-
-
-%% Running TSCU with Constrained SAGA
-% By using DTWbandwidth parameter, you can limit DTW to stay a banded
-% region in the similarity matrix. 
-
-%% 30% percent 
-% In this example we took %30 of the matrix which is enough to get a good
-% alignment
-tscu(trn,tst,'Alignment','CDTW','DTWbandwidth',30,'DisplayAlignment',{1,1});
-
-%% 10% percent 
-% If we further narrow the band, then the alignment is getting worse.
-tscu(trn,tst,'Alignment','CDTW','DTWbandwidth',10,'DisplayAlignment',{1,1});
+%% Running Curve Registration
+% In this example, we use the curve registraion technique of Ramsay & Li.
+% The related keywoard is |CREG| for this purpose. The related software is
+% already bundled in TSCU so that you don't need to download them. In
+% addition to that, I use |DisplayAlignment| option to see an example
+% alignment in action. 
+%
+% The resulting alignment (registration in Ramsay's 
+% terminology) is nearly identical to |SAGA| as expected since they both 
+% use the same ODE model. Since the curve registration technique uses a
+% deterministic optimization routines, we don't expect difference from run
+% to run. This is not the case for |SAGA| since it uses Genetic Algorithm
+% which result in slight different results for each run.
+tscu(trn,tst,'Alignment','CREG','DisplayAlignment',{1,1});

@@ -5,7 +5,7 @@ that is used to classify time series by using various distance
 metrics and classification methods.
 
 * Author: Huseyin Kaya, hkayabilisim@gmail.com, 2013/03/02
-* Web Page: http://tscu.blogspot.com
+* Web Page: http://www.timewarping.org
 * Source Page:  https://github.com/hkayabilisim/TSCU.git
 
 SOURCE CODE
@@ -14,7 +14,7 @@ Source files are available at https://github.com/hkayabilisim/TSCU.git
 
 INSTALLATION
 ============
-Please see http://tscu.blogspot.com
+Please see http://www.timewarping.org
 
 EXAMPLES
 ========
@@ -23,11 +23,11 @@ or examine their published outputs on the web page.
 
 DOCUMENTATION
 =============
-Please see http://tscu.blogspot.com
+Please see http://www.timewarping.org
 
 TODO
 ====
-* Linear SVM will be added as an alternative classification scheme.
+* export fig is not compatible with Octave
 
 FEATURES
 ========
@@ -39,16 +39,24 @@ FEATURES
 * Classification performance measures such as user, producer accuracies, 
   estimated labels, Kappa statistics are provided in the function output.
 * Displays input training and testing data with class labels.
-* Nelder-Mead Simplex method can now be used as an optimization alternative
-  if alignment is carried out with SAGA.
+* Nelder-Mead Simplex, Genetic Algorithm Toolbox and a simplified MEX version of 
+  Genetic Algorithm can be used as an optimization routine if you want to use
+  SAGA alignment method.
 
 KNOWN ISSUES
 ============
 * TSCU can not use multi-channel time series. 
-* Althoug Jcost1 is MEX counterpart of Jcost0, it is still slower than Jcost0
-  if 'SAGAOptimizationMethod' is 'Simplex'.
+* export fig is not compatible with Octave
 
 CHANGE LOG
 ==========
+2014-06-04
+* A simplified and fast MEX version of Genetic Algorithm is added.
+* SAGACostfunction is removed.
+* dtw.c is renamed as tscudtw.c
+* export fig package and the curve registration toolbox of 
+  Ramsay & Silverman is added
+
+2013-07-03
 * Jcost0 now accepts the time variable (t). Making time discretization 
   outside of Jcost0 makes it approximately 5% faster. 2013-07-03
