@@ -1,11 +1,3 @@
-//
-//  saga_util.h
-//  SAGA
-//
-//  Created by Huseyin Kaya on 25/03/14.
-//  Copyright (c) 2014 Huseyin Kaya. All rights reserved.
-//
-
 #ifndef SAGA_saga_util_h
 #define SAGA_saga_util_h
 

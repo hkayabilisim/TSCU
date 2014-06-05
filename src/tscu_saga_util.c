@@ -1,11 +1,3 @@
-//
-//  saga_util.c
-//  SAGA
-//
-//  Created by Huseyin Kaya on 25/03/14.
-//  Copyright (c) 2014 Huseyin Kaya. All rights reserved.
-//
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
