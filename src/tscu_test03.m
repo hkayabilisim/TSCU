@@ -49,6 +49,4 @@ mex tscu_dtw.c
 % If you look at the confusion matrix, you will see the improvement: no
 % misclassification.
 %
-
-
 tscu(trn,tst,'Alignment','DTW');

@@ -3,12 +3,12 @@
 #include <math.h>
 #include <time.h>
 #include "tscu_saga_util.h"
-#include <Accelerate/Accelerate.h>
 
 void tscu_saga_rms(double *rms,double *x,double *z,int n)
 {
-    rms[0] = 0.0;
     int i;
+    rms[0] = 0.0;
+
     for (i=0;i<n;i++)
         rms[0] = rms[0] + (x[i]-z[i])*(x[i]-z[i]);
     rms[0] = rms[0]/(n-1);
@@ -98,8 +98,6 @@ void tscu_saga_solve(double *u,double *s,double *bmat,int n, int k)
     int i,j;
     double a,b,dh;
     dh = 1.0/(n-1.0);
-    
-    /* cblas_dgemv(CblasRowMajor, CblasNoTrans, n, k, 1, bmat, n, s, 1, 0, u, 1); */
     
     /* Solution with Taylor approximation */
     for (i=0; i<n; i++) {
@@ -251,9 +249,9 @@ void tscu_saga_register(double *x,double *y,double *z,double *path1, double *pat
 }
 void   tscu_saga_min(double *y,int n,double *min,int *minindex)
 {
+    int i;
     *min=1000000;
     *minindex = 0;
-    int i;
     for (i=0; i<n; i++) {
         if (y[i] < *min)
         {
