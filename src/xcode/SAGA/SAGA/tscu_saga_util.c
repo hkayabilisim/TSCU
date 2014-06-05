@@ -145,11 +145,20 @@ void tscu_saga_solve(double *u,double *s,double *bmat,int n, int k)
     
 }
 
+/*
+  y(h(t)) = z(t)
+ 
+  inputs
+       h : nx1 warping function
+       y : nx1 input time series
+       n : 1x1 length
+   outputs
+       z : nx1 warped function
+ */
 void tscu_saga_warp(double *h, double *y, double *z, int n)
 {
     int i;
     int l;
-    /* y(h(t)) = z(t) */
     z[0]  =y[0];
     z[n-1]=y[n-1];
     

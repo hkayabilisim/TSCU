@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		4A9972E819029DF1004C54DD /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 4A9972E719029DF1004C54DD /* main.c */; };
 		4A9972EA19029DF1004C54DD /* SAGA.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = 4A9972E919029DF1004C54DD /* SAGA.1 */; };
+		4A9972F119029E4B004C54DD /* tscu_saga_util.c in Sources */ = {isa = PBXBuildFile; fileRef = 4A9972F019029E4B004C54DD /* tscu_saga_util.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -28,6 +29,8 @@
 		4A9972E419029DF1004C54DD /* SAGA */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = SAGA; sourceTree = BUILT_PRODUCTS_DIR; };
 		4A9972E719029DF1004C54DD /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 		4A9972E919029DF1004C54DD /* SAGA.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = SAGA.1; sourceTree = "<group>"; };
+		4A9972F019029E4B004C54DD /* tscu_saga_util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = tscu_saga_util.c; sourceTree = "<group>"; };
+		4A9972F219029E8F004C54DD /* tscu_saga_util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tscu_saga_util.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -61,6 +64,8 @@
 			isa = PBXGroup;
 			children = (
 				4A9972E719029DF1004C54DD /* main.c */,
+				4A9972F019029E4B004C54DD /* tscu_saga_util.c */,
+				4A9972F219029E8F004C54DD /* tscu_saga_util.h */,
 				4A9972E919029DF1004C54DD /* SAGA.1 */,
 			);
 			path = SAGA;
@@ -117,6 +122,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4A9972F119029E4B004C54DD /* tscu_saga_util.c in Sources */,
 				4A9972E819029DF1004C54DD /* main.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

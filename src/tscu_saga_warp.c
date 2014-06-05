@@ -7,11 +7,11 @@
 #include <time.h>
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
-    double *y,*s,*w,*z;
+    double *y,*s,*z,*b,*u;
     int    n,k;
     
     if (nrhs != 2) {
-        mexErrMsgTxt("Usage: [z w]=tscu_saga_warp(y s)");
+        mexErrMsgTxt("Usage: [z u]=tscu_saga_warp(y s)");
     } 
     
     y     = mxGetPr(prhs[0]);   
@@ -23,13 +23,17 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
         
     plhs[0] = mxCreateDoubleMatrix(1, n,    mxREAL);
     plhs[1] = mxCreateDoubleMatrix(1, n,    mxREAL);
+
+    b = (double *)malloc(sizeof(double)*n*k);
     
     z     = mxGetPr(plhs[0]); 
-    w     = mxGetPr(plhs[1]); 
+    u     = mxGetPr(plhs[1]); 
 
-    tscu_saga_base(w,s,n,k);
-    tscu_saga_solve(w,n);
-    tscu_saga_warp(w,y,z,n);
+    tscu_saga_base(b,n,k);
+    tscu_saga_solve(u,s,b,n,k);
+    tscu_saga_warp(u,y,z,n);
+
+    free(b);
 }
 
         
