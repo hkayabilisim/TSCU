@@ -326,14 +326,14 @@ for i=1:length(uniquelabels)
     
     
     figure
-    subplot(121);
+    subplot(211);
     plot(x(trnidx,2:end)','k');
-    title(sprintf('Class index: %d [TRN:%d]',...
-        uniquelabels(i),sum(trnidx)));
-    subplot(122);
+    title(sprintf('%d time series in training set of class label %d',...
+        sum(trnidx),uniquelabels(i)));
+    subplot(212);
     plot(y(tstidx,2:end)','k');
-    title(sprintf('Class index: %d [TST:%d]',...
-        uniquelabels(i),sum(tstidx)));
+    title(sprintf('%d time series in testing set of class label %d',...
+        sum(tstidx),uniquelabels(i)));
 end
 end
 
@@ -485,12 +485,12 @@ for i = 1 : n*m
     end
 end
 distancematrix = reshape(alldistances,n,m);
-[dummy, mindistanceIdx]=min(distancematrix);
+[~,mindistanceIdx]=min(distancematrix);
 labels = xlabels(mindistanceIdx);
-displine('Info','index of testing objects',sprintf('%3d ',1:m),options);
-displine('Info','labels of testing objects (True)',sprintf('%3d ',ylabels),options);
-displine('Info','labels of testing objects (Estimated)',sprintf('%3d ',labels),options);
-displine('Info','closest training objects',sprintf('%3d ',mindistanceIdx),options);
+displine('Debug','index of testing objects',sprintf('%3d ',1:m),options);
+displine('Debug','labels of testing objects (True)',sprintf('%3d ',ylabels),options);
+displine('Debug','labels of testing objects (Estimated)',sprintf('%3d ',labels),options);
+displine('Debug','closest training objects',sprintf('%3d ',mindistanceIdx),options);
 
 if strcmp(options.DumpDistanceMatrix,'yes')
     save(sprintf('tscu_distancematrix_%s.txt',Alignment),'distancematrix','-ascii');

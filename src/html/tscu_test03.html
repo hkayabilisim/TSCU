@@ -1,0 +1,177 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>TSCU test suite: 03</title><meta name="generator" content="MATLAB 8.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-04-01"><meta name="DC.source" content="tscu_test03.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>TSCU test suite: 03</h1><!--introduction--><p>This test runs Time Series Classification Utility (TSCU) with <tt>Alignment</tt> option set to <tt>DTW</tt>.</p><div><ul><li>Author : Huseyin Kaya</li><li>Website: <a href="http://timewarping.org">http://timewarping.org</a></li><li>Sources: <a href="https://github.com/hkayabilisim/TSCU">https://github.com/hkayabilisim/TSCU</a></li></ul></div><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Initialization</a></li><li><a href="#2">Creating a toy example</a></li><li><a href="#3">Building the MEX file</a></li><li><a href="#4">Running TSCU with DTW</a></li></ul></div><h2>Initialization<a name="1"></a></h2><p>I usually prefer to clear and close everything not to deal with unexpected behaviours.</p><pre class="codeinput">clear <span class="string">all</span>
+close <span class="string">all</span>
+clc
+</pre><h2>Creating a toy example<a name="2"></a></h2><p>Let's create 4 time series with two different classes: sine and cosine. We also deviced an artifical change within the same class time series by warping the time axis with w(t)=t^2.</p><pre class="language-matlab">Name  <span class="string">Function</span>       <span class="string">Class</span>  <span class="string">Set</span>
+----  --------       -----  --------
+a     <span class="string">sin(2*pi*t)</span>    <span class="string">1</span>      <span class="string">Training</span>
+b     <span class="string">sin(2*pi*t*t)</span>  <span class="string">1</span>      <span class="string">Testing</span>
+c     <span class="string">cos(2*pi*t)</span>    <span class="string">2</span>      <span class="string">Training</span>
+d     <span class="string">cos(2*pi*t*t)</span>  <span class="string">2</span>      <span class="string">testing</span>
+</pre><p><tt>tst</tt> and <tt>trn</tt> vectors contain both the time series and their class labels.</p><pre class="codeinput">t = linspace(0,1,29);
+a = sin(2*pi*t);
+b = sin(2*pi*t.^2);
+c = cos(2*pi*t);
+d = cos(2*pi*t.^2);
+trn = [ 1 a ; 2 c];
+tst = [ 1 b ; 2 d];
+</pre><h2>Building the MEX file<a name="3"></a></h2><p>DTW is implemented in C, so we should compile the corresponding function by using mex</p><pre class="codeinput">mex <span class="string">tscu_dtw.c</span>
+</pre><pre class="codeoutput">Building with 'Xcode with Clang'.
+MEX completed successfully.
+</pre><h2>Running TSCU with DTW<a name="4"></a></h2><p>We run TSCU with default settings except <tt>Alignment</tt> option set to <tt>DTW</tt>. Dynamic Time Warping (DTW) is a powerfull alignment method dating back to 1960s. By using DTW we are expecting an improvement in overall classification accuracy.</p><p>If you look at the confusion matrix, you will see the improvement: no misclassification.</p><pre class="codeinput">tscu(trn,tst,<span class="string">'Alignment'</span>,<span class="string">'DTW'</span>);
+</pre><pre class="codeoutput">Size of training set.....................: 2
+Size of testing set......................: 2
+Time series length.......................: 29
+Classification method....................: K-NN
+Alignment method.........................: DTW
+Displaying input data....................: no
+No cross validation is chosen............: 0
+Displaying alignments....................: none
+Dumping distance matrix..................: no
+Class information........................: 1 [TRN:  1 TST:  1]
+Class information........................: 2 [TRN:  1 TST:  1]
+index of testing objects.................:   1   2 
+labels of testing objects (True).........:   1   2 
+labels of testing objects (Estimated)....:   1   2 
+closest training objects.................:   1   2 
+Overall Accuracy.........................: 1.000   
+Overall Error............................: 0.000   
+Producer Accuracy........................: 1.000   1.000   
+User Accuracy............................: 1.000   1.000   
+Kappa....................................: 1.000   
+Z-value..................................: Inf     
+Confusion matrix.........................: 
+Confusion matrix
+          1     2    UA    TO 
+    1     1     0 1.000     1 
+    2     0     1 1.000     1 
+   PA 1.000 1.000 
+   TO     1     1           2 
+
+Classification time (sec)................: 0.06    
+The end of TSCU..........................: FINISHED
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% TSCU test suite: 03
+% This test runs Time Series Classification Utility (TSCU) with |Alignment|
+% option set to |DTW|.
+%
+% * Author : Huseyin Kaya
+% * Website: <http://timewarping.org>
+% * Sources: <https://github.com/hkayabilisim/TSCU>
+
+%% Initialization
+% I usually prefer to clear and close everything not to deal with
+% unexpected behaviours.
+clear all
+close all
+clc
+
+%% Creating a toy example
+% Let's create 4 time series with two different classes: sine and cosine.
+% We also deviced an artifical change within the same class time series by
+% warping the time axis with w(t)=t^2.
+%
+%   Name  Function       Class  Set
+%   REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH  REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH       REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-  REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+%   a     sin(2*pi*t)    1      Training
+%   b     sin(2*pi*t*t)  1      Testing
+%   c     cos(2*pi*t)    2      Training
+%   d     cos(2*pi*t*t)  2      testing
+%
+% |tst| and |trn| vectors contain both the time series and their class 
+% labels. 
+t = linspace(0,1,29);
+a = sin(2*pi*t); 
+b = sin(2*pi*t.^2);
+c = cos(2*pi*t); 
+d = cos(2*pi*t.^2);
+trn = [ 1 a ; 2 c];
+tst = [ 1 b ; 2 d];
+
+%% Building the MEX file
+% DTW is implemented in C, so we should compile the corresponding function
+% by using mex 
+mex tscu_dtw.c
+
+%% Running TSCU with DTW
+% We run TSCU with default settings except |Alignment| option set to 
+% |DTW|. Dynamic Time Warping (DTW) is a powerfull alignment method dating
+% back to 1960s. By using DTW we are expecting an improvement in overall
+% classification accuracy.
+%
+% If you look at the confusion matrix, you will see the improvement: no
+% misclassification.
+%
+
+
+tscu(trn,tst,'Alignment','DTW');
+##### SOURCE END #####
+--></body></html>
