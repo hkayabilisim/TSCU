@@ -259,5 +259,5 @@ fprintf('Overall accuracy : %8.3f\n',out.perf.OA);
 % have to be one-to-one.
 tscu(trn,tst,'Alignment','CDTW','LogLevel','Alert',...
     'DisplayAlignment',{42,142});
-%%
-% 
+%% Using Support Vector Machines (SVM) classification
+tscu(trn,tst,'Alignment','CDTW','LogLevel','Alert',...
