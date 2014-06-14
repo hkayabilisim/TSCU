@@ -260,4 +260,64 @@ fprintf('Overall accuracy : %8.3f\n',out.perf.OA);
 tscu(trn,tst,'Alignment','CDTW','LogLevel','Alert',...
     'DisplayAlignment',{42,142});
 %% Using Support Vector Machines (SVM) classification
-tscu(trn,tst,'Alignment','CDTW','LogLevel','Alert',...
+% From the beginning, we have been using Nearest Neighbor classification
+% scheme which is the default classifier in TSCU. However you have an
+% alternative: Support Vector Machines (SVM). If you want to give it a try,
+% you should use the option |Classifier|. The default kernel type of SVM is
+% linear with C=10. 
+% 
+% The implementation of SVM is based on the MATLAB(R) scripts in the book 
+% "Support Vector Machines for Antenna Array Processing and 
+% Electromagnetics", Manel Martinez-Ramon, Christos G. Christodoulou, 
+% Morgan & Claypool Publishers, 2006. 
+% ISSN <http://www.amazon.com/dp/159829024X 159829024X>
+tscu(trn,tst,'Classifier','SVM');
+%%
+% Let's analyze the results. First of all it took around 1 seconds to do 
+% all the classification whereas KNN required approximately 10 seconds.
+% So it is clearly faster than KNN. But remember the exact running times
+% will change depending on the number and speed of the processors you have.
+% Don't be surprized if you have very different running times. If you have
+% a fast CPU, both SVM and KNN may run under a second. If that is the case
+% you may not notice a difference between the two. On the other
+% hand, if you have a slow PC, then the difference between the two will be
+% dramatic.
+%
+% The next thing to look at is the accuracy. The overall accuracy of SVM
+% 92.7% which is higher than KNN (remember that, it was 88%). If you 
+% compare the confusion matrices, you will see that SVM is better from KNN 
+% at  discriminating the first class from other classes. However it is 
+% still having a hard time to separete the first class from the second as 
+% it  makes 10 misclassifications (see the 2nd row and first column entry 
+% of the confusion matrix). Other than that SVM is make only 4 
+% misclassifications.
+%% Comparing SVM with KNN under different alignments
+% We compared SVM with KNN without using alignment or technically speaking
+% alignment with NONE. In this case, SVM seems better than KNN in terms of
+% both speed and accuracy. But what about if I use other alignments such as
+% DTW and CDTW? I will run TSCU with different options and prepare a table
+% similar to the below.
+%
+%                           Alignment
+%                      -------------------
+%  Classification      NONE    DTW    CDTW
+%  KNN                 ...     ...    ...
+%  SVM                 ...     ...    ...
+svm_none=tscu(trn,tst,'Classifier','SVM','LogLevel','Alert');
+svm_dtw =tscu(trn,tst,'Classifier','SVM','Alignment','DTW',...
+          'LogLevel','Alert');
+svm_cdtw=tscu(trn,tst,'Classifier','SVM','Alignment','CDTW',...
+          'LogLevel','Alert');
+knn_none=tscu(trn,tst,'LogLevel','Alert');
+knn_dtw =tscu(trn,tst,'LogLevel','Alert','Alignment','DTW');
+knn_cdtw=tscu(trn,tst,'LogLevel','Alert','Alignment','CDTW');
+%%
+% In order to create the table I mentioned above, I have to use these ugly
+% commands. Sorry! 
+fprintf('%12s %-17s\n','','Alignment');
+fprintf('%12s %s\n','','-----------------');
+fprintf('%12s %-5s %-5s %-5s\n','Classifier','NONE','DTW','CDTW');
+fprintf('%12s %3.1f%% %3.1f%% %3.1f%%\n','KNN',100*knn_none.perf.OA,...
+    100*knn_dtw.perf.OA,100*knn_cdtw.perf.OA);
+fprintf('%12s %3.1f%% %3.1f%% %3.1f%%\n','SVM',100*svm_none.perf.OA,...
+    100*svm_dtw.perf.OA,100*svm_cdtw.perf.OA);

@@ -524,7 +524,6 @@ for i=1:m-1
         e=1e-6;
         C=10;                               %Functional Trade-off
 
-        
         switch options.svmkernel
             case 'linear'
                 if strcmp(options.alignment,'NONE')
@@ -601,9 +600,9 @@ for i=1:m-1
 end
 labels=mode(tstlabels,2);
 
-displine('Info','index of testing objects',sprintf('%3d ',1:size(y,1)),options);
-displine('Info','labels of testing objects (True)',sprintf('%3d ',y(:,1)),options);
-displine('Info','labels of testing objects (Estimated)',sprintf('%3d ',labels),options);
+displine('Debug','index of testing objects',sprintf('%3d ',1:size(y,1)),options);
+displine('Debug','labels of testing objects (True)',sprintf('%3d ',y(:,1)),options);
+displine('Debug','labels of testing objects (Estimated)',sprintf('%3d ',labels),options);
 %displine('Info','closest training objects',sprintf('%3d ',mindistanceIdx),options);
 
 end
