@@ -337,3 +337,76 @@ fprintf('%12s %3.1f%% %3.1f%% %3.1f%%\n','SVM',100*svm_none.perf.OA,...
 % * classification method (KNN,SVM)
 % * alignment method (NONE,DTW,CDTW)
 % * data (Synthetic Control,...)
+%% Tuning soft margin parameter of SVM
+% Like many other machine learning algorithms, SVM has also some parameters
+% that controls the details of the algorithm. The most well known parameter
+% is the soft margin parameter; usually denoted by C. It is very useful for
+% the cases where it is impossible to obtain a separating hyperlane without
+% any misclassification. Setting C to a non-zero value, you basically give
+% some flexibility to SVM. In doing so, SVM is allowed to make
+% some errors. Increasing the soft margin parameter give higher
+% flexibility. For further information, you can take a look at 
+% Cortes, C.;Vapnik, V. (1995), "Support-vector networks". Machine Learning
+% 20 (3): 273 <http://dx.doi.org/10.1007%2FBF00994018
+% doi:10.1007/BF00994018>
+%%
+% The default soft margin parameter is 8 in TSCU. You can change it by
+% using |SVMSoftMargin| option. Here I will try 11 different parameters and
+% plot the resulting classification accuracies. It is common to try powers
+% of 2, so I will follow the general trend.
+% The parameters that I used are C={pow(2,i) where i=-5,...,5}
+margins=2.^(-5:5);
+accuracies=zeros(1,numel(margins));
+for i=1:length(margins)
+    out=tscu(trn,tst,'Classifier','SVM','SVMSoftMargin',margins(i),...
+        'LogLevel','Alert');
+    accuracies(i)=out.perf.OA;
+end
+%%
+% Then I will run tscu in silent mode (remember the |LogLevel| option),
+% collect the accuracies and plot them. 
+figure
+plot(log2(margins),100*accuracies,'o-');
+xlabel('Soft margin parameter (log2)');
+ylabel('Overall accuracy (%)');
+%%%
+% Here are the classificaton accuracies over different soft margins. As
+% you see, the results didn't change except C=1/8 and C=1/4. But the change
+% in the accuracy is around 0.006 which is very small and negligible.
+% Therefore, changing the soft margin parameter of SVM didn't
+% improve the accuracy at least in this dataset and alignment scheme. 
+%% Using nonlinear kernel for SVM
+% TSCU allows you to change the default linear kernel used in SVM to a
+% nonlinear gaussian kernel. For this, you have assign |SVMKernel| option
+% to |gaussian|. 
+tscu(trn,tst,'Classifier','SVM','SVMKernel','gaussian');
+%%
+% You can see the kernel type of SVM in the info messages. Other than that,
+% the rest of the messages are same as before except the classification
+% accuracy: 50% which is very low compared to the linear SVM.
+% The confusion matrix tells us that the first class (normal) is confused 
+% with the other classes. 
+%% Tuning gaussian kernel
+% You can change the gaussian kernel parameter sigma by using the option
+% |SVMSigma|. Here I will try the following sigma values:
+% s={pow(2,i) where i=-5,...,5}. Then I will run tscu in silent mode 
+% (remember the |LogLevel| option) collect the accuracies and plot them. 
+sigmas=2.^(-5:5);
+accuracies=zeros(1,numel(sigmas));
+for i=1:length(sigmas)
+    out=tscu(trn,tst,'Classifier','SVM','SVMKernel','gaussian',...
+        'SVMSigma',sigmas(i),...
+        'LogLevel','Alert');
+    accuracies(i)=out.perf.OA;
+end
+%%
+figure
+plot(log2(sigmas),100*accuracies,'o-');
+xlabel('sigma parameter of Gaussian kernel (log2)');
+ylabel('Overall accuracy (%)');
+%% 
+% As you see, the classification accuracy heavily depends of the sigma 
+% parameter. As it is being increased, the overall accuracy increases. The
+% largest accuracy (the y-axis of the biggest peak) is 97.67\%.  This is
+% very high compared to the linear SVM.
+fprintf('Maximum accuracy: %8.2f\n',100*max(accuracies));

@@ -2,12 +2,11 @@
 <!DOCTYPE html
   PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head>
-<script> (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){ (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o), m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m) })(window,document,'script','//www.google-analytics.com/analytics.js','ga'); ga('create', 'UA-51925957-1', 'timewarping.org'); ga('require', 'displayfeatures'); ga('send', 'pageview'); </script>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>A Tutorial for Time Series Classification Utility (TSCU)</title><meta name="generator" content="MATLAB 8.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-06-15"><meta name="DC.source" content="tscu_tutorial.m"><style type="text/css">
+      --><title>A Tutorial for Time Series Classification Utility (TSCU)</title><meta name="generator" content="MATLAB 8.0"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-06-19"><meta name="DC.source" content="tscu_tutorial.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -24,7 +23,7 @@ a:visited { color:#004aa0; text-decoration:none; }
 
 p { padding:0px; margin:0px 0px 20px; }
 img { padding:0px; margin:0px 0px 20px; border:none; }
-p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+p img, pre img, tt img, li img { margin-bottom:0px; } 
 
 ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
 ul li { padding:0px; margin:0px 0px 7px 0px; }
@@ -39,12 +38,11 @@ ol li ul li { list-style:square; }
 
 .content { font-size:1.2em; line-height:140%; padding: 20px; }
 
-pre, code { font-size:12px; }
-tt { font-size: 1.2em; }
+pre, tt, code { font-size:12px; }
 pre { margin:0px 0px 20px; }
+pre.error { color:red; }
 pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
 pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
-pre.error { color:red; }
 
 @media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
 
@@ -67,16 +65,10 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
 
-  </style></head><body><div class="content"><h1>A Tutorial for Time Series Classification Utility (TSCU)</h1><!--introduction--><p>Time Series Classification Utility (TSCU) is a collection of MATLAB&reg; and C functions written to create an easy to use framework for classification of time series. If you have a collection of time series that needs to be classified, then continue reading this tutorial.</p><div><ul><li>Author : Huseyin Kaya</li><li>Website: <a href="http://timewarping.org">http://timewarping.org</a></li><li>Sources: <a href="https://github.com/hkayabilisim/TSCU">https://github.com/hkayabilisim/TSCU</a></li></ul></div><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Installation</a></li><li><a href="#2">Compiling MEX functions</a></li><li><a href="#3">Loading a time series dataset</a></li><li><a href="#5">Dataset format</a></li><li><a href="#9">Classification with default setttings</a></li><li><a href="#11">Using Dynamic Time Warping</a></li><li><a href="#13">Using Constrained Dynamic Time Warping</a></li><li><a href="#14">Changing band width in CDTW</a></li><li><a href="#15">Displaying alignments</a></li><li><a href="#16">Using Support Vector Machines (SVM) classification</a></li><li><a href="#18">Comparing SVM with KNN under different alignments</a></li></ul></div><h2>Installation<a name="1"></a></h2><p>TSCU is written in MATLAB&reg;, so there is no setup; just download the package and run from MATLAB&reg; Command Window. The complete package is available for free from <a href="https://github.com/hkayabilisim/TSCU">GitHub</a>. You have these two options:</p><p><b>Option 1</b> Use <a href="https://github.com/hkayabilisim/TSCU/archive/master.zip">Download ZIP</a> option to download the package in a zip file. If you choose this way you have to download the whole package to obtain the most current version of the utility.</p><p><b>Option 2</b> Another option is to use a command line to fetch the git repository. In this way, it is easy to update the package by using suitable <tt>git</tt> options. To check out the repository you can use the following command. If you don't have git on your command line, then you should install to the operating system. For further information, please take a look at <a href="http://git-scm.com">http://git-scm.com</a>.</p><pre class="language-matlab"># git <span class="string">clone</span> <span class="string">https://github.com/hkayabilisim/TSCU.git</span>
+  </style></head><body><div class="content"><h1>A Tutorial for Time Series Classification Utility (TSCU)</h1><!--introduction--><p>Time Series Classification Utility (TSCU) is a collection of MATLAB&reg; and C functions written to create an easy to use framework for classification of time series. If you have a collection of time series that needs to be classified, then continue reading this tutorial.</p><div><ul><li>Author : Huseyin Kaya</li><li>Website: <a href="http://timewarping.org">http://timewarping.org</a></li><li>Sources: <a href="https://github.com/hkayabilisim/TSCU">https://github.com/hkayabilisim/TSCU</a></li></ul></div><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Installation</a></li><li><a href="#2">Compiling MEX functions</a></li><li><a href="#3">Loading a time series dataset</a></li><li><a href="#5">Dataset format</a></li><li><a href="#9">Classification with default setttings</a></li><li><a href="#11">Using Dynamic Time Warping</a></li><li><a href="#13">Using Constrained Dynamic Time Warping</a></li><li><a href="#14">Changing band width in CDTW</a></li><li><a href="#15">Displaying alignments</a></li><li><a href="#16">Using Support Vector Machines (SVM) classification</a></li><li><a href="#18">Comparing SVM with KNN under different alignments</a></li><li><a href="#21">Tuning soft margin parameter of SVM</a></li><li><a href="#25">Using nonlinear kernel for SVM</a></li><li><a href="#27">Tuning gaussian kernel</a></li></ul></div><h2>Installation<a name="1"></a></h2><p>TSCU is written in MATLAB&reg;, so there is no setup; just download the package and run from MATLAB&reg; Command Window. The complete package is available for free from <a href="https://github.com/hkayabilisim/TSCU">GitHub</a>. You have these two options:</p><p><b>Option 1</b> Use <a href="https://github.com/hkayabilisim/TSCU/archive/master.zip">Download ZIP</a> option to download the package in a zip file. If you choose this way you have to download the whole package to obtain the most current version of the utility.</p><p><b>Option 2</b> Another option is to use a command line to fetch the git repository. In this way, it is easy to update the package by using suitable <tt>git</tt> options. To check out the repository you can use the following command. If you don't have git on your command line, then you should install to the operating system. For further information, please take a look at <a href="http://git-scm.com">http://git-scm.com</a>.</p><pre class="language-matlab"># git <span class="string">clone</span> <span class="string">https://github.com/hkayabilisim/TSCU.git</span>
 </pre><p>In both methods, you will end up with a directory named TSCU. Open your MATLAB&reg; Command Window, and go to the TSCU/src directory. Now you are ready to run TSCU. But please be patient. Just read this tutorial and follow the step by step instructions.</p><h2>Compiling MEX functions<a name="2"></a></h2><p>In the <b>TSCU/src</b> directory, you will see some MEX functions and their precompiled versions for Windows XP SP3 and Mac OS X. If someshow you need to compile it again, than you should issue the following commands. If everything goes smoothly, then you will see the compiled mex files on the same directory. If not, you need to configure MEX. A good starting point is <a href="http://www.mathworks.com/help/matlab/matlab_external/what-you-need-to-build-mex-files.html">here</a>.</p><pre class="codeinput">mex <span class="string">tscu_saga_register.c</span> <span class="string">tscu_saga_util.c</span>
 mex <span class="string">tscu_saga_warp.c</span>     <span class="string">tscu_saga_util.c</span>
 mex <span class="string">tscu_dtw.c</span>
-</pre><pre class="codeoutput">Building with 'Xcode with Clang'.
-MEX completed successfully.
-Building with 'Xcode with Clang'.
-MEX completed successfully.
-Building with 'Xcode with Clang'.
-MEX completed successfully.
 </pre><h2>Loading a time series dataset<a name="3"></a></h2><p>For this tutorial we will use <a href="http://www.cs.ucr.edu/~eamonn/time_series_data">UCR time series repository</a> which contains more than 40 different datasets. You can send an e-mail to Dr. Keogh to download all of them. For the time being, we will use the only one available for public access: Synthetic Control Dataset. If you haven't already downloaded it, then go ahead and run the following commands to fetch the dataset into the MATLAB workspace.</p><pre class="codeinput">ucr_address=<span class="string">'http://www.cs.ucr.edu/~eamonn/time_series_data'</span>;
 trnfile=<span class="string">'synthetic_control_TRAIN'</span>;
 tstfile=<span class="string">'synthetic_control_TEST'</span>;
@@ -143,7 +135,7 @@ Confusion matrix
    PA 0.440 1.000 0.980 1.000 0.940 0.920 
    TO    50    50    50    50    50    50         300 
 
-Classification time (sec)................: 10.56   
+Classification time (sec)................: 9.60    
 The end of TSCU..........................: FINISHED
 </pre><p>If you see an output similar to the above, then you are in a right track. By default TSCU provides several information lines explaining what is going on during classification. Here I like to explain some of them.</p><p><b>Size of training/testing set:</b> It is good to know the size of the dataset. For example, if it is too big, then I may decide to use parallel programming feature.</p><p><b>Time series length:</b> It is same for all time series in a repository. Actually, the classification and alignment algorithms in TSCU can deal with varying time series length. But the convention in UCR repository is to keep it fixed.</p><p><b>Classification method:</b> By default, 1-nearest neighbor algorithm is used. Another option is to use Support Vector Machine (SVM) which will be explained in later sections.</p><p><b>Alignment method:</b> Here you see <b>NONE</b> which is equivalent to say there is no alignment between time series. Other options are <b>DTW</b>, <b>CDTW</b>, <b>SAGA</b> and <b>CREG</b> which will be explained later.</p><p><b>Displaying input data:</b> Sometimes you may need to display the input data to better understand the dataset or put in a document or whatever.</p><p><b>Class information:</b> Displays the distribution of time series in the training and testing sets.</p><p><b>Overall Accuracy:</b> This is perhaps the most important output of TSCU. Here you may want to see a number close to to 1. In this example it is 0.88 (88%). In the output, there are other performance evaluation metrics which I will cover later.</p><h2>Using Dynamic Time Warping<a name="11"></a></h2><p>We know that, correcting time shifts between time series increases the performance of time series classification. Dynamic Time Warping (<b>DTW</b>) is the most well known alignment method in the literature. Can we increase the overall accuracy if we use DTW? Let's use the option <i>Alignment</i> and see what happens.</p><p>If you see an error message similar to the below, than you need to compile MEX files. Please consult to the Installation section in the beginning of this tutorial.</p><pre>Undefined function 'tscu_dtw' for input arguments of type 'double'.</pre><pre class="codeinput">tscu(trn,tst,<span class="string">'Alignment'</span>,<span class="string">'DTW'</span>);
 </pre><pre class="codeoutput">Size of training set.....................: 300
@@ -179,7 +171,7 @@ Confusion matrix
    PA 0.960 1.000 1.000 1.000 1.000 1.000 
    TO    50    50    50    50    50    50         300 
 
-Classification time (sec)................: 16.36   
+Classification time (sec)................: 19.32   
 The end of TSCU..........................: FINISHED
 </pre><p>As you see, the overall accuracy is increased to 99.3%. This is an important improvement in the classification. Let's take a closer look at confusion matrices. If you sum the off-diagonal elements of a confusion matrix, you can obtain the number of misclassification. In case of <b>DTW</b> it is only 2. Whereas the number of misclassifications in the previous case (no alignment) was 36. By looking at this dramatic change, we can say that, using an alignment method improves classification performance.</p><p>On the other hand DTW is a bit slower than previos case (no alignment) if you look at the classification times. This is understandable as DTW requires more calculations than measuring standard Euclidean distance.</p><h2>Using Constrained Dynamic Time Warping<a name="13"></a></h2><p>This time I changed alignment method and used Constrained Dynamic Time Warping (CDTW). This is achieved by changing <tt>DTW</tt> with <tt>CDTW</tt>. You can also append additional options to the tscu function. For example you can make TSCU to display the input data by using <tt>DisplayInputData</tt> option. It will plot all training and testing data grouped into class labels. So you will see 6 figures iwhich has two subplots in each.</p><p>The overall accuracy, when CDTW is used, is dropped to 98.7% but it is not a significant decrease. The number of misclassifications is only 4. So again we see a dramatic gain by using another alignment algorithm.</p><p>In the output, you should see a line containing <i>DTW band width</i>. The band width here refers to the width of the diagonal band in the distance matrix of two time series. CDTW is <tt>constrained</tt> because it is not allowed to work outside of this band. It is defined in percentage because the length of time series can vary widely between datasets. TSCU uses the default value of 6%. Other than the constraining band, CDTW is identical to DTW.</p><pre class="codeinput">tscu(trn,tst,<span class="string">'Alignment'</span>,<span class="string">'CDTW'</span>,<span class="string">'DisplayInputData'</span>,<span class="string">'yes'</span>);
 </pre><pre class="codeoutput">Size of training set.....................: 300
@@ -216,7 +208,7 @@ Confusion matrix
    PA 0.960 1.000 1.000 1.000 1.000 0.960 
    TO    50    50    50    50    50    50         300 
 
-Classification time (sec)................: 14.21   
+Classification time (sec)................: 13.82   
 The end of TSCU..........................: FINISHED
 </pre><img vspace="5" hspace="5" src="tscu_tutorial_02.png" alt=""> <img vspace="5" hspace="5" src="tscu_tutorial_03.png" alt=""> <img vspace="5" hspace="5" src="tscu_tutorial_04.png" alt=""> <img vspace="5" hspace="5" src="tscu_tutorial_05.png" alt=""> <img vspace="5" hspace="5" src="tscu_tutorial_06.png" alt=""> <img vspace="5" hspace="5" src="tscu_tutorial_07.png" alt=""> <h2>Changing band width in CDTW<a name="14"></a></h2><p>You can change the band width used in Constrained Dynamic Time Warping (CDTW) by using <tt>DTWbandwidth</tt> option. Here I will set it to 100% which is equivalent to using DTW. But this time, I want to get rid of information messages. To do this, you can use <tt>LogLevel</tt> option. By setting it to <tt>Alert</tt>, you won't get <tt>Info</tt> messages which is the default for <tt>LogLevel</tt>. We prevented the info messages, but how will I know the results? You should assign the output to a variable. The output variable is simply a structure containing all the information. Now let's run it. You should obtain the same accuracy as DTW: 99.3%.</p><pre class="codeinput">out=tscu(trn,tst,<span class="string">'Alignment'</span>,<span class="string">'CDTW'</span>,<span class="string">'LogLevel'</span>,<span class="string">'Alert'</span>,<span class="string">'DTWbandwidth'</span>,100);
 fprintf(<span class="string">'Overall accuracy : %8.3f\n'</span>,out.perf.OA);
@@ -229,6 +221,7 @@ Size of testing set......................: 300
 Time series length.......................: 60
 Classification method....................: SVM
 SVM kernel type..........................: linear
+SVM Soft margin..........................:  8.00000
 Alignment method.........................: NONE
 Displaying input data....................: no
 No cross validation is chosen............: 0
@@ -258,7 +251,7 @@ Confusion matrix
    PA 0.800 1.000 0.920 0.920 0.960 0.960 
    TO    50    50    50    50    50    50         300 
 
-Classification time (sec)................: 1.12    
+Classification time (sec)................: 4.21    
 The end of TSCU..........................: FINISHED
 </pre><p>Let's analyze the results. First of all it took around 1 seconds to do all the classification whereas KNN required approximately 10 seconds. So it is clearly faster than KNN. But remember the exact running times will change depending on the number and speed of the processors you have. Don't be surprized if you have very different running times. If you have a fast CPU, both SVM and KNN may run under a second. If that is the case you may not notice a difference between the two. On the other hand, if you have a slow PC, then the difference between the two will be dramatic.</p><p>The next thing to look at is the accuracy. The overall accuracy of SVM 92.7% which is higher than KNN (remember that, it was 88%). If you compare the confusion matrices, you will see that SVM is better from KNN at  discriminating the first class from other classes. However it is still having a hard time to separete the first class from the second as it  makes 10 misclassifications (see the 2nd row and first column entry of the confusion matrix). Other than that SVM is make only 4 misclassifications.</p><h2>Comparing SVM with KNN under different alignments<a name="18"></a></h2><p>We compared SVM with KNN without using alignment or technically speaking alignment with NONE. In this case, SVM seems better than KNN in terms of both speed and accuracy. But what about if I use other alignments such as DTW and CDTW? I will run TSCU with different options and prepare a table similar to the below.</p><pre>                         Alignment
                     -------------------
@@ -283,8 +276,72 @@ fprintf(<span class="string">'%12s %3.1f%% %3.1f%% %3.1f%%\n'</span>,<span class
              -----------------
   Classifier NONE  DTW   CDTW 
          KNN 88.0% 99.3% 98.7%
-         SVM 92.7% 91.7% 91.7%
-</pre><p>As you see, if I don't use alignment, then SVM is definitely better than KNN. But using alignment does not improve the accuracy of SVM.  Contrary it slightly decreases the accuracy. So, I can claim that the classification accuracy depends not only on the classification method, but also on the alignment method. The two are tighly coupled. A third dependancy is data. The performance of classification algorithms heavily depends on the type of data. In the above example, KNN with NONE alignment is better than SVM with NONE alignment. But you find a dataset for which the opposite is true. In summary, the classification accuracy depends on three main factors:</p><div><ul><li>classification method (KNN,SVM)</li><li>alignment method (NONE,DTW,CDTW)</li><li>data (Synthetic Control,...)</li></ul></div><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014a</a><br></p></div><!--
+         SVM 92.7% 88.0% 93.3%
+</pre><p>As you see, if I don't use alignment, then SVM is definitely better than KNN. But using alignment does not improve the accuracy of SVM.  Contrary it slightly decreases the accuracy. So, I can claim that the classification accuracy depends not only on the classification method, but also on the alignment method. The two are tighly coupled. A third dependancy is data. The performance of classification algorithms heavily depends on the type of data. In the above example, KNN with NONE alignment is better than SVM with NONE alignment. But you find a dataset for which the opposite is true. In summary, the classification accuracy depends on three main factors:</p><div><ul><li>classification method (KNN,SVM)</li><li>alignment method (NONE,DTW,CDTW)</li><li>data (Synthetic Control,...)</li></ul></div><h2>Tuning soft margin parameter of SVM<a name="21"></a></h2><p>Like many other machine learning algorithms, SVM has also some parameters that controls the details of the algorithm. The most well known parameter is the soft margin parameter; usually denoted by C. It is very useful for the cases where it is impossible to obtain a separating hyperlane without any misclassification. Setting C to a non-zero value, you basically give some flexibility to SVM. In doing so, SVM is allowed to make some errors. Increasing the soft margin parameter give higher flexibility. For further information, you can take a look at Cortes, C.;Vapnik, V. (1995), "Support-vector networks". Machine Learning 20 (3): 273 <a href="http://dx.doi.org/10.1007%2FBF00994018">doi:10.1007/BF00994018</a></p><p>The default soft margin parameter is 8 in TSCU. You can change it by using <tt>SVMSoftMargin</tt> option. Here I will try 11 different parameters and plot the resulting classification accuracies. It is common to try powers of 2, so I will follow the general trend. The parameters that I used are C={pow(2,i) where i=-5,...,5}</p><pre class="codeinput">margins=2.^(-5:5);
+accuracies=zeros(1,numel(margins));
+<span class="keyword">for</span> i=1:length(margins)
+    out=tscu(trn,tst,<span class="string">'Classifier'</span>,<span class="string">'SVM'</span>,<span class="string">'SVMSoftMargin'</span>,margins(i),<span class="keyword">...</span>
+        <span class="string">'LogLevel'</span>,<span class="string">'Alert'</span>);
+    accuracies(i)=out.perf.OA;
+<span class="keyword">end</span>
+</pre><p>Then I will run tscu in silent mode (remember the <tt>LogLevel</tt> option), collect the accuracies and plot them.</p><pre class="codeinput">figure
+plot(log2(margins),100*accuracies,<span class="string">'o-'</span>);
+xlabel(<span class="string">'Soft margin parameter (log2)'</span>);
+ylabel(<span class="string">'Overall accuracy (%)'</span>);
+</pre><p>Here are the classificaton accuracies over different soft margins. As you see, the results didn't change except C=1/8 and C=1/4. But the change in the accuracy is around 0.006 which is very small and negligible. Therefore, changing the soft margin parameter of SVM didn't improve the accuracy at least in this dataset and alignment scheme.</p><img vspace="5" hspace="5" src="tscu_tutorial_12.png" alt=""> <h2>Using nonlinear kernel for SVM<a name="25"></a></h2><p>TSCU allows you to change the default linear kernel used in SVM to a nonlinear gaussian kernel. For this, you have assign <tt>SVMKernel</tt> option to <tt>gaussian</tt>.</p><pre class="codeinput">tscu(trn,tst,<span class="string">'Classifier'</span>,<span class="string">'SVM'</span>,<span class="string">'SVMKernel'</span>,<span class="string">'gaussian'</span>);
+</pre><pre class="codeoutput">Size of training set.....................: 300
+Size of testing set......................: 300
+Time series length.......................: 60
+Classification method....................: SVM
+SVM kernel type..........................: gaussian
+SVM Soft margin..........................:  8.00000
+SVM sigma parameter......................:  1.00000
+Alignment method.........................: NONE
+Displaying input data....................: no
+No cross validation is chosen............: 0
+Displaying alignments....................: none
+Dumping distance matrix..................: no
+Class information........................: 1 [TRN: 50 TST: 50]
+Class information........................: 2 [TRN: 50 TST: 50]
+Class information........................: 3 [TRN: 50 TST: 50]
+Class information........................: 4 [TRN: 50 TST: 50]
+Class information........................: 5 [TRN: 50 TST: 50]
+Class information........................: 6 [TRN: 50 TST: 50]
+Overall Accuracy.........................: 0.523   
+Overall Error............................: 0.477   
+Producer Accuracy........................: 1.000   0.460   0.340   0.440   0.420   0.480   
+User Accuracy............................: 0.259   1.000   1.000   1.000   1.000   1.000   
+Kappa....................................: 0.428   
+Z-value..................................: 1.918   
+Confusion matrix.........................: 
+Confusion matrix
+          1     2     3     4     5     6    UA    TO 
+    1    50    27    33    28    29    26 0.259   193 
+    2     0    23     0     0     0     0 1.000    23 
+    3     0     0    17     0     0     0 1.000    17 
+    4     0     0     0    22     0     0 1.000    22 
+    5     0     0     0     0    21     0 1.000    21 
+    6     0     0     0     0     0    24 1.000    24 
+   PA 1.000 0.460 0.340 0.440 0.420 0.480 
+   TO    50    50    50    50    50    50         300 
+
+Classification time (sec)................: 2.09    
+The end of TSCU..........................: FINISHED
+</pre><p>You can see the kernel type of SVM in the info messages. Other than that, the rest of the messages are same as before except the classification accuracy: 50% which is very low compared to the linear SVM. The confusion matrix tells us that the first class (normal) is confused with the other classes.</p><h2>Tuning gaussian kernel<a name="27"></a></h2><p>You can change the gaussian kernel parameter sigma by using the option <tt>SVMSigma</tt>. Here I will try the following sigma values: s={pow(2,i) where i=-5,...,5}. Then I will run tscu in silent mode (remember the <tt>LogLevel</tt> option) collect the accuracies and plot them.</p><pre class="codeinput">sigmas=2.^(-5:5);
+accuracies=zeros(1,numel(sigmas));
+<span class="keyword">for</span> i=1:length(sigmas)
+    out=tscu(trn,tst,<span class="string">'Classifier'</span>,<span class="string">'SVM'</span>,<span class="string">'SVMKernel'</span>,<span class="string">'gaussian'</span>,<span class="keyword">...</span>
+        <span class="string">'SVMSigma'</span>,sigmas(i),<span class="keyword">...</span>
+        <span class="string">'LogLevel'</span>,<span class="string">'Alert'</span>);
+    accuracies(i)=out.perf.OA;
+<span class="keyword">end</span>
+</pre><pre class="codeinput">figure
+plot(log2(sigmas),100*accuracies,<span class="string">'o-'</span>);
+xlabel(<span class="string">'sigma parameter of Gaussian kernel (log2)'</span>);
+ylabel(<span class="string">'Overall accuracy (%)'</span>);
+</pre><img vspace="5" hspace="5" src="tscu_tutorial_13.png" alt=""> <p>As you see, the classification accuracy heavily depends of the sigma parameter. As it is being increased, the overall accuracy increases. The largest accuracy (the y-axis of the biggest peak) is 97.67\%.  This is very high compared to the linear SVM.</p><pre class="codeinput">fprintf(<span class="string">'Maximum accuracy: %8.2f\n'</span>,100*max(accuracies));
+</pre><pre class="codeoutput">Maximum accuracy:    97.67
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2012b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% A Tutorial for Time Series Classification Utility (TSCU)
 % Time Series Classification Utility (TSCU) is a collection of MATLAB(R) 
@@ -625,5 +682,78 @@ fprintf('%12s %3.1f%% %3.1f%% %3.1f%%\n','SVM',100*svm_none.perf.OA,...
 % * classification method (KNN,SVM)
 % * alignment method (NONE,DTW,CDTW)
 % * data (Synthetic Control,...)
+%% Tuning soft margin parameter of SVM
+% Like many other machine learning algorithms, SVM has also some parameters
+% that controls the details of the algorithm. The most well known parameter
+% is the soft margin parameter; usually denoted by C. It is very useful for
+% the cases where it is impossible to obtain a separating hyperlane without
+% any misclassification. Setting C to a non-zero value, you basically give
+% some flexibility to SVM. In doing so, SVM is allowed to make
+% some errors. Increasing the soft margin parameter give higher
+% flexibility. For further information, you can take a look at 
+% Cortes, C.;Vapnik, V. (1995), "Support-vector networks". Machine Learning
+% 20 (3): 273 <http://dx.doi.org/10.1007%2FBF00994018
+% doi:10.1007/BF00994018>
+%%
+% The default soft margin parameter is 8 in TSCU. You can change it by
+% using |SVMSoftMargin| option. Here I will try 11 different parameters and
+% plot the resulting classification accuracies. It is common to try powers
+% of 2, so I will follow the general trend.
+% The parameters that I used are C={pow(2,i) where i=-5,...,5}
+margins=2.^(-5:5);
+accuracies=zeros(1,numel(margins));
+for i=1:length(margins)
+    out=tscu(trn,tst,'Classifier','SVM','SVMSoftMargin',margins(i),...
+        'LogLevel','Alert');
+    accuracies(i)=out.perf.OA;
+end
+%%
+% Then I will run tscu in silent mode (remember the |LogLevel| option),
+% collect the accuracies and plot them. 
+figure
+plot(log2(margins),100*accuracies,'o-');
+xlabel('Soft margin parameter (log2)');
+ylabel('Overall accuracy (%)');
+%%%
+% Here are the classificaton accuracies over different soft margins. As
+% you see, the results didn't change except C=1/8 and C=1/4. But the change
+% in the accuracy is around 0.006 which is very small and negligible.
+% Therefore, changing the soft margin parameter of SVM didn't
+% improve the accuracy at least in this dataset and alignment scheme. 
+%% Using nonlinear kernel for SVM
+% TSCU allows you to change the default linear kernel used in SVM to a
+% nonlinear gaussian kernel. For this, you have assign |SVMKernel| option
+% to |gaussian|. 
+tscu(trn,tst,'Classifier','SVM','SVMKernel','gaussian');
+%%
+% You can see the kernel type of SVM in the info messages. Other than that,
+% the rest of the messages are same as before except the classification
+% accuracy: 50% which is very low compared to the linear SVM.
+% The confusion matrix tells us that the first class (normal) is confused 
+% with the other classes. 
+%% Tuning gaussian kernel
+% You can change the gaussian kernel parameter sigma by using the option
+% |SVMSigma|. Here I will try the following sigma values:
+% s={pow(2,i) where i=-5,...,5}. Then I will run tscu in silent mode 
+% (remember the |LogLevel| option) collect the accuracies and plot them. 
+sigmas=2.^(-5:5);
+accuracies=zeros(1,numel(sigmas));
+for i=1:length(sigmas)
+    out=tscu(trn,tst,'Classifier','SVM','SVMKernel','gaussian',...
+        'SVMSigma',sigmas(i),...
+        'LogLevel','Alert');
+    accuracies(i)=out.perf.OA;
+end
+%%
+figure
+plot(log2(sigmas),100*accuracies,'o-');
+xlabel('sigma parameter of Gaussian kernel (log2)');
+ylabel('Overall accuracy (%)');
+%% 
+% As you see, the classification accuracy heavily depends of the sigma 
+% parameter. As it is being increased, the overall accuracy increases. The
+% largest accuracy (the y-axis of the biggest peak) is 97.67\%.  This is
+% very high compared to the linear SVM.
+fprintf('Maximum accuracy: %8.2f\n',100*max(accuracies));
 ##### SOURCE END #####
 --></body></html>

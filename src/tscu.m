@@ -36,6 +36,12 @@ function out = tscu(x,y,varargin)
 %    'gaussian'   : Gaussian
 %    default      : 'linear'
 %
+%   'SVMSoftMargin': Soft margin parameter (C) of SVM
+%    default      : 8
+%
+%   'SVMSigma': sigma value in gaussian SVM kernel
+%    default      : 1
+%
 %   'LogLevel': Log level
 %    'Emergency'  : (level 0)
 %    'Alert'      : (level 1)
@@ -134,6 +140,10 @@ else
                 options.alignment = varargin{i+1};
             case 'SVMKernel'
                 options.svmkernel = varargin{i+1};
+            case 'SVMSoftMargin'
+                options.svmsoftmargin = varargin{i+1};            
+            case 'SVMSigma'
+                options.svmsigma = varargin{i+1};
             case 'DTWbandwidth'
                 options.DTWbandwidth = varargin{i+1};
             case 'LogLevel'
@@ -218,6 +228,12 @@ displine('Info','Time series length',sprintf('%d',size(x,2)-1),options);
 displine('Info','Classification method',options.classifier,options);
 if strcmp(options.classifier,'SVM')
     displine('Info','SVM kernel type',options.svmkernel,options);
+    displine('Info','SVM Soft margin',...
+        sprintf('%8.5f',options.svmsoftmargin),options);
+    if strcmp(options.svmkernel,'gaussian')
+        displine('Info','SVM sigma parameter',...
+            sprintf('%8.5f',options.svmsigma),options);
+    end
 end
 displine('Info','Alignment method',options.alignment,options);
 displine('Info','Displaying input data',options.DisplayInputData,options);
@@ -344,6 +360,8 @@ options.classifier               = 'K-NN';
 options.alignment                = 'NONE';
 options.loglevel                 = 'Info';
 options.svmkernel                = 'linear';
+options.svmsoftmargin            = 8;
+options.svmsigma                 = 1;
 options.reportLineWidth          = 40;
 options.trainingRatio            = 0.3;
 options.DTWbandwidth             = 6;
@@ -506,7 +524,7 @@ classlabels=unique(sort(x(:,1)));
 m=length(classlabels);
 tstlabels=zeros(size(y,1),(m-1)*m/2);
 
-opt=optimset('maxiter',500,'largescale','off','display','off');
+opt=optimset('maxiter',500,'Algorithm','active-set','display','off');
 % One against one approach
 k=1;
 for i=1:m-1
@@ -522,7 +540,7 @@ for i=1:m-1
         xlen=size(objects,2);
         R=zeros(nx,nx);
         e=1e-6;
-        C=10;                               %Functional Trade-off
+        C=options.svmsoftmargin;    
 
         switch options.svmkernel
             case 'linear'
@@ -544,7 +562,7 @@ for i=1:m-1
                     end
                 end
             case 'gaussian'
-                sigma=1;       % Parameter of the kernel
+                sigma=options.svmsigma;       % Parameter of the kernel
                 D=buffer(sum([kron(objects,ones(nx,1))...
                   - kron(ones(1,nx),objects')'].^2,2),nx,0);
                 R=exp(-D/(2*sigma)); % Kernel Matrix               
@@ -603,7 +621,6 @@ labels=mode(tstlabels,2);
 displine('Debug','index of testing objects',sprintf('%3d ',1:size(y,1)),options);
 displine('Debug','labels of testing objects (True)',sprintf('%3d ',y(:,1)),options);
 displine('Debug','labels of testing objects (Estimated)',sprintf('%3d ',labels),options);
-%displine('Info','closest training objects',sprintf('%3d ',mindistanceIdx),options);
 
 end
 
