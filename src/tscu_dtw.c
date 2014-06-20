@@ -1,3 +1,20 @@
+/*
+ * The core functionality of DTW in this file depends on the UCR Suite software 
+ * introduced in the following paper.
+ *
+ * Thanawin Rakthanmanon, Bilson Campana, Abdullah Mueen, Gustavo Batista, 
+ * Brandon Westover, Qiang Zhu, Jesin Zakaria, Eamonn Keogh (2012). 
+ * Searching and Mining Trillions of Time Series Subsequences under 
+ * Dynamic Time Warping SIGKDD 2012.  http://www.cs.ucr.edu/~eamonn/UCRsuite.html
+ *
+ * However, I've excluded lower bounding features for simplity. I've also changed
+ * the main dtw function a little so that it also returns the warping paths. I've also
+ * written a MEX file to call it from MATLAB(R).
+ *
+ * Author : Huseyin Kaya
+ * Website: http://timewarping.org
+ * Sources: https://github.com/hkayabilisim/TSCU
+ * */
 #include "mex.h"
 
 #include <stdio.h>
@@ -9,10 +26,7 @@
 #define max(x, y) ((x)>(y)?(x):(y))
 #define dist(x, y) ((x-y)*(x-y))
 
-
 #define INF 1e20       /*Pseudo Infitinte number for this code */
-
-
 
 /*
  Calculate Dynamic Time Wrapping distance
@@ -75,8 +89,6 @@ double dtw(double* A, double* B, int m, double *radius, int *path1, int *path2, 
             else
                 trace[i][k]=1; /* diag */
         }
-        
-        
         
         /* Move current array to previous array. */
         cost_tmp = cost;
