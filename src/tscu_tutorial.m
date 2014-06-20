@@ -410,3 +410,42 @@ ylabel('Overall accuracy (%)');
 % largest accuracy (the y-axis of the biggest peak) is 97.67\%.  This is
 % very high compared to the linear SVM.
 fprintf('Maximum accuracy: %8.2f\n',100*max(accuracies));
+%% Signal Alignment via Genetic Algorithm
+% Now let's go back to the alignment methods. I demonstrated DTW and
+% Constrained DTW algorithms in the beginning of this tutorial. TCSU
+% support another alignment algorithm called Signal Alignment via Genetic
+% Algorithm (SAGA). It combines the idea of using smooth monotone 
+% increasing functions introduced by Ramsay with Genetic Algorithm. It
+% finds the most suitable warping function in the alignment by solving the
+% alignment problem with Genetic Algorithm. For the details, you can
+% consult "SAGA: A novel signal alignment method based on genetic 
+% algorithm", H Kaya, S Gunduz-Oguducu, Information Sciences 228, 113-130
+% <http://www.sciencedirect.com/science/article/pii/S0020025512007955 
+% DOI:10.1016/j.ins.2012.12.012>.
+%
+% In order to use SAGA, you should set the |Alignment| option to |SAGA|.
+% Please note that, SAGA is implemented as a MEX file, so you should first
+% compile the required MEX files.
+mex tscu_saga_register.c tscu_saga_util.c
+mex tscu_saga_warp.c     tscu_saga_util.c
+%%
+% If there is no problem in compiling MEX file then you can run TSCU. Here 
+% I use also |DisplayAlignment' option to see the shape of the warping 
+% function TSCU created. I choosed the same training and testing samples so
+% that you can compare the warping function with the one obtained by 
+% Constrained DTW in the previous sections.
+tscu(trn,tst,'Alignment','SAGA','DisplayAlignment',{[42],[142]});
+%%
+% The first thing to take note of is the smoothness of the warping
+% function. Since SAGA uses an Ordinary Differential Equation to create 
+% smooth functions, you don't see wildly rapid changes or staircase
+% patterns in the warping function.  For this reason, SAGA can not make
+% local adjustments in the time axis. This feature becomes a liability in
+% this synthetic control dataset because the there are random fluctuations
+% in the data especially in the first class. The random noise in the time
+% series make it harder to discrimate the first class from others. 
+%
+% Another aspect of SAGA is its speed. As you see from classification
+% time message in the output it is way slower than DTW or CDTW. This is 
+% an excepted behaviour becase Genetic Algorithm is known to be a slow 
+% optimization solver.
