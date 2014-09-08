@@ -37,9 +37,10 @@ function out = tscu(x,y,varargin)
 %    default      : 'linear'
 %
 %   'SVMSoftMargin': Soft margin parameter (C) of SVM
+%    Giving it as an array triggers model selection with cross-validation.
 %    default      : 8
 %
-%   'SVMSigma': sigma value in gaussian SVM kernel
+%   'SVMGamma': gamma value in gaussian SVM kernel
 %    default      : 1
 %
 %   'LogLevel': Log level
@@ -67,7 +68,7 @@ function out = tscu(x,y,varargin)
 %
 %   'CrossValidation': An integer specifying how many time the
 %    cross validation takes place.
-%    default      : 0 means don't do cross validation
+%    default      : <2 means don't do cross validation
 %
 %   'MATLABPool': MATLAB pool used for parallel computing
 %    'local' : Set it it 'local' if you want to use the processors
@@ -141,9 +142,9 @@ else
             case 'SVMKernel'
                 options.svmkernel = varargin{i+1};
             case 'SVMSoftMargin'
-                options.svmsoftmargin = varargin{i+1};            
-            case 'SVMSigma'
-                options.svmsigma = varargin{i+1};
+                options.svmsoftmargin = varargin{i+1};
+            case 'SVMGamma'
+                options.svmgamma = varargin{i+1};
             case 'DTWbandwidth'
                 options.DTWbandwidth = varargin{i+1};
             case 'LogLevel'
@@ -213,7 +214,7 @@ switch options.alignment
         end
         u(n-lastpiece-1:n,k)=1;
         integration    = @(s) cumsum(s)/(size(s,1)-1);
-        options.SAGAbmat = integration(integration(u));        
+        options.SAGAbmat = integration(integration(u));
     case 'CREG'
         options.alignmentfunction = @cregalignment;
     otherwise
@@ -229,20 +230,27 @@ displine('Info','Classification method',options.classifier,options);
 if strcmp(options.classifier,'SVM')
     displine('Info','SVM kernel type',options.svmkernel,options);
     displine('Info','SVM Soft margin',...
-        sprintf('%8.5f',options.svmsoftmargin),options);
+        sprintf('%8.5f ',options.svmsoftmargin),options);
     if strcmp(options.svmkernel,'gaussian')
-        displine('Info','SVM sigma parameter',...
-            sprintf('%8.5f',options.svmsigma),options);
+        displine('Info','SVM gamma parameter',...
+            sprintf('%8.5f ',options.svmgamma),options);
     end
 end
+
 displine('Info','Alignment method',options.alignment,options);
 displine('Info','Displaying input data',options.DisplayInputData,options);
 
-if options.CrossValidation < 1
+if numel(options.svmsoftmargin) > 1 && options.CrossValidation < 2
+    error('tscu:invalidoption',...
+        ['You should set CrossValidation >1 if you '...
+        'specify and array of soft margin parameters']);
+end
+
+if options.CrossValidation < 2
     displine('Info','No cross validation is chosen',...
         sprintf('%d',options.CrossValidation),options);
 else
-    displine('Info','Cross validation is not implemented',...
+    displine('Info','Cross validation',...
         sprintf('%d',options.CrossValidation),options);
 end
 if strcmp(options.alignment,'SAGA')
@@ -361,7 +369,7 @@ options.alignment                = 'NONE';
 options.loglevel                 = 'Info';
 options.svmkernel                = 'linear';
 options.svmsoftmargin            = 8;
-options.svmsigma                 = 1;
+options.svmgamma                 = 1;
 options.reportLineWidth          = 40;
 options.trainingRatio            = 0.3;
 options.DTWbandwidth             = 6;
@@ -516,108 +524,213 @@ end
 
 end
 
+function z = kernel_linear(x,y)
+z = x*y';
+end
+
+
+function z = kernel_gaussian(x,y,gamma)
+
+nx = size(x,1);
+ny = size(y,1);
+z=zeros(nx,ny);
+
+for i=1:nx
+    for j=1:ny
+        z(i,j)=exp(-gamma*( (x(i,:)-y(j,:))*(x(i,:)-y(j,:))'));
+    end
+end
+end
+
+
+function best_c = svmmodelselection_gaussian(x,options)
+% SVM Model selection
+nx=size(x,1);
+xlen=size(x,2)-1;
+
+cv_accuracies=zeros(length(options.svmgamma),length(options.svmsoftmargin));
+
+for igamma=1:length(options.svmgamma);
+    gamma=options.svmgamma(igamma);
+    Kernel = zeros(nx,nx);
+    
+    if strcmp(options.alignment,'NONE')
+        Kernel = kernel_gaussian(x(:,2:end),x(:,2:end),gamma);
+    else
+        for i=1:nx
+            for j=1:nx
+                [~,path1, path2]=...
+                    options.alignmentfunction(x(i,2:end),...
+                    x(j,2:end),options);
+                xAligned = interp1(1:xlen,x(i,2:end),path1);
+                yAligned = interp1(1:xlen,x(j,2:end),path2);
+                displine('Debug','Aligning',...
+                    sprintf('%5d .vs. %5d',i,j),options);
+                Kernel(i,j)=kernel_gaussian(xAligned,yAligned,gamma);
+                %Kernel(j,i)=Kernel(i,j);
+            end
+        end
+        %for i=1:nx
+        %    Kernel(i,i)=kernel_gaussian(x(i,2:end),x(i,2:end),gamma);
+        %end
+        
+    end
+    
+    for ic=1:length(options.svmsoftmargin)
+        svmopts=sprintf('-t 4 -h 0 -v %d -c %f -g %f',options.CrossValidation,...
+            options.svmsoftmargin(ic),options.svmgamma(igamma));
+        cv_accuracies(igamma,ic) = svmtrain(x(:,1),[(1:nx)',Kernel], svmopts);
+        displine('Info','Grid search [C, gamma] pair',...
+    sprintf('%12.5f %12.5f [acc:%4f]',options.svmsoftmargin(ic),...
+    options.svmgamma(igamma),cv_accuracies(igamma,ic)),options);
+    end
+end
+
+[~,best_c_index    ] = max(max(cv_accuracies));
+[~,best_gamma_index] = max(cv_accuracies(:,best_c_index));
+
+best_gamma=options.svmgamma(best_gamma_index);
+best_c=options.svmsoftmargin(best_c_index);
+best_accuracy=cv_accuracies(best_gamma_index,best_c_index);
+displine('Info','Best [C, gamma] pair',...
+    sprintf('%12.5f %12.5f [acc:%4f]',best_c,best_gamma,best_accuracy),options);
+end
+
+function best_c = svmmodelselection_linear(x,options)
+% SVM Model selection
+nx=size(x,1);
+xlen=size(x,2)-1;
+
+Kernel = zeros(nx,nx);
+
+if strcmp(options.alignment,'NONE')
+    Kernel = kernel_linear(x(:,2:end),x(:,2:end));
+else
+    for i=1:nx-1
+        for j=i+1:nx
+            [~,path1, path2]=...
+                options.alignmentfunction(x(i,2:end),...
+                x(j,2:end),options);
+            xAligned = interp1(1:xlen,x(i,2:end),path1);
+            yAligned = interp1(1:xlen,x(j,2:end),path2);
+            displine('Debug','Aligning',...
+                sprintf('%5d .vs. %5d',i,j),options);
+            Kernel(i,j)=kernel_linear(xAligned,yAligned);
+            Kernel(j,i)=Kernel(i,j);
+        end
+    end
+    for i=1:nx
+        Kernel(i,i)=kernel_linear(x(i,2:end),x(i,2:end));
+    end
+    
+end
+
+cv_accuracies=zeros(length(options.svmsoftmargin),1);
+for i=1:length(options.svmsoftmargin)
+    svmopts=sprintf('-t 4 -h 0 -v %d -c %f',options.CrossValidation,...
+        options.svmsoftmargin(i));
+    cv_accuracies(i) = svmtrain(x(:,1),[(1:nx)',Kernel], svmopts);
+    displine('Info','Grid search [C] ',...
+        sprintf('%12.5f [acc:%4f]',options.svmsoftmargin(i),...
+        cv_accuracies(i)),options);
+end
+
+[best_accuracy,best_c_index]=max(cv_accuracies);
+best_c=options.svmsoftmargin(best_c_index);
+displine('Info','Best C parameter',...
+    sprintf('%12.5f [acc:%4f]',best_c,best_accuracy),options);
+end
+
 function labels = svmclassifier(x,y,options)
 %SVMCLASSIFIER Support Vector Machine Classification
 %   LABELS = SVMCLASSIFIER(X,Y,OPTIONS)
 
-classlabels=unique(sort(x(:,1)));
-m=length(classlabels);
-tstlabels=zeros(size(y,1),(m-1)*m/2);
-
-opt=optimset('maxiter',500,'Algorithm','active-set','display','off');
-% One against one approach
-k=1;
-for i=1:m-1
-    for j=i+1:m
-        % Training
-        class_one=x(x(:,1)==classlabels(i),2:end);
-        class_two=x(x(:,1)==classlabels(j),2:end);
-        objects=[class_one;class_two];
-        truelabels=[-ones(size(class_one,1),1);ones(size(class_two,1),1)];
-        displine('Debug','SVM one-against-one',...
-            sprintf('class %2d .vs. class %2d',classlabels(i),classlabels(j)),options);
-        nx=size(objects,1);
-        xlen=size(objects,2);
-        R=zeros(nx,nx);
-        e=1e-6;
-        C=options.svmsoftmargin;    
-
-        switch options.svmkernel
-            case 'linear'
-                if strcmp(options.alignment,'NONE')
-                    R=objects*objects';
-                else
-                    for ii=1:nx-1
-                        for jj=ii+1:nx
-                            [distance, path1, path2]=options.alignmentfunction(objects(ii,:),objects(jj,:),options);
-                            xAligned = interp1(1:xlen,objects(ii,:),path1);
-                            yAligned = interp1(1:xlen,objects(jj,:),path2);
-                            displine('Debug','Aligning',sprintf('%5d .vs. %5d',ii,jj),options);
-                            R(ii,jj)=xAligned*yAligned';
-                            R(jj,ii)=R(ii,jj);
-                        end
-                    end
-                    for ii=1:nx
-                        R(ii,ii)=objects(ii,:)*objects(ii,:)';
-                    end
-                end
-            case 'gaussian'
-                sigma=options.svmsigma;       % Parameter of the kernel
-                D=buffer(sum([kron(objects,ones(nx,1))...
-                  - kron(ones(1,nx),objects')'].^2,2),nx,0);
-                R=exp(-D/(2*sigma)); % Kernel Matrix               
-        end      
-        
-        Y=diag(truelabels);
-        H=Y*R*Y+1e-6*eye(length(truelabels));         %Matrix H regularized
-        f=-ones(size(truelabels)); a=truelabels'; K=0;
-        Kl=zeros(size(truelabels));
-        Ku=C*ones(size(truelabels));
-        alpha=quadprog(H,f,[],[],a,K,Kl,Ku,[],opt); %Solver
-        
-        switch options.svmkernel
-            case 'linear'
-                w=objects'*(alpha.*truelabels);               
-                %ind=find(alpha>e & alpha<=C-e);
-                ind=find(alpha<C);
-                b=mean(truelabels(ind) - objects(ind,:)*w);
-                % Testing
-                tstvalues=y(:,2:end)*w+b;
-                
-                %figure
-                %subplot(121)
-                %plot(alpha,'.');
-                %title(sprintf('%d %d',i,j));
-                %subplot(122);
-                %plot(eig(H),'.');
-                
-
-            case 'gaussian'
-                ind=find(alpha>e);
-                x_sv=objects(ind,:);    % Extraction of the
-                                         % support vectors
-                N_SV=length(ind); 
-                ind=find(alpha>e & alpha<C-e);
-                N_margin=length(ind);
-                D=buffer(sum([kron(x_sv,ones(N_margin,1))...
-                 - kron(ones(1,N_SV),objects(ind,:)')'].^2,2),N_margin,0);
-                R_margin=exp(-D/(2*sigma));
-                y_margin=R_margin*(truelabels(ind).*alpha(ind));
-                b=mean(truelabels(ind) - y_margin); 
-                
-                N_test=size(y,1);                
-                D=buffer(sum([kron(x_sv,ones(N_test,1))...
-                 - kron(ones(1,N_SV),y(:,2:end)')'].^2,2),N_test,0);
-                R_test=exp(-D/(2*sigma));
-                tstvalues=R_test*(truelabels(ind).*alpha(ind))+b;
-        end
-        tstlabels(tstvalues< 0,k)=classlabels(i);
-        tstlabels(tstvalues>=0,k)=classlabels(j);
-        k = k + 1;
+c=options.svmsoftmargin;
+gamma=options.svmgamma;
+if numel(options.svmsoftmargin) > 1 || numel(options.svmgamma) > 1 
+    if strcmp(options.svmkernel,'linear')
+        c = svmmodelselection_linear(x,options);
+    elseif strcmp(options.svmkernel,'gaussian')
+        gamma = svmmodelselection_gaussian(x,options);
     end
 end
-labels=mode(tstlabels,2);
 
+
+nx=size(x,1);
+ny=size(y,1);
+xlen=size(x,2)-1;
+KernelMatTrain_vs_Train = zeros(nx,nx);
+KernelMatTest_vs_Train = zeros(ny,nx);
+
+if strcmp(options.alignment,'NONE')
+    if strcmp(options.svmkernel,'linear')
+        KernelMatTrain_vs_Train = kernel_linear(x(:,2:end),x(:,2:end));
+        KernelMatTest_vs_Train  = kernel_linear(y(:,2:end),x(:,2:end));
+    elseif strcmp(options.svmkernel,'gaussian')
+        KernelMatTrain_vs_Train = kernel_gaussian(x(:,2:end),x(:,2:end),gamma);
+        KernelMatTest_vs_Train  = kernel_gaussian(y(:,2:end),x(:,2:end),gamma);
+    end
+else
+    for i=1:nx
+        for j=1:nx
+            [~, path1, path2]=...
+                options.alignmentfunction(x(i,2:end),...
+                x(j,2:end),options);
+            xAligned = interp1(1:xlen,x(i,2:end),path1);
+            yAligned = interp1(1:xlen,x(j,2:end),path2);
+            displine('Debug','Aligning',...
+                sprintf('%5d .vs. %5d',i,j),options);
+            if strcmp(options.svmkernel,'linear')
+                KernelMatTrain_vs_Train(i,j)=kernel_linear(xAligned,yAligned);
+            elseif strcmp(options.svmkernel,'gaussian')
+                KernelMatTrain_vs_Train(i,j)=...
+                    kernel_gaussian(xAligned,yAligned,gamma);
+            end
+            %KernelMatTrain_vs_Train(j,i)=KernelMatTrain_vs_Train(i,j);
+        end
+     end
+%     for i=1:nx
+%         if strcmp(options.svmkernel,'linear')
+%             KernelMatTrain_vs_Train(i,i)=kernel_linear(x(i,2:end),x(i,2:end));
+%         elseif strcmp(options.svmkernel,'gaussian')
+%             KernelMatTrain_vs_Train(i,i)=...
+%                 kernel_gaussian(x(i,2:end),x(i,2:end),gamma);
+%         end
+%     end
+    for i=1:ny
+        for j=1:nx
+            [~, path1, path2]=...
+                options.alignmentfunction(y(i,2:end),...
+                x(j,2:end),options);
+            xAligned = interp1(1:xlen,x(j,2:end),path1);
+            yAligned = interp1(1:xlen,y(i,2:end),path2);
+            displine('Debug','Aligning',...
+                sprintf('%5d .vs. %5d',i,j),options);
+            if strcmp(options.svmkernel,'linear')
+                KernelMatTest_vs_Train(i,j)=...
+                    kernel_linear(xAligned,yAligned);
+            elseif strcmp(options.svmkernel,'gaussian')
+                KernelMatTest_vs_Train(i,j)=...
+                    kernel_gaussian(xAligned,yAligned,gamma);
+            end
+        end
+    end
+end
+
+svmopts=sprintf('-t 4 -h 0 -c %f',c); % Precomputed kernel matrix
+
+model = svmtrain(x(:,1),[(1:nx)',KernelMatTrain_vs_Train], svmopts);
+[labels,~,~] = svmpredict(y(:,1),[(1:ny)',KernelMatTest_vs_Train], model);
+
+[~,p]=chol(KernelMatTrain_vs_Train);
+if p <= 0 
+    isPD = 'yes';
+else
+    isPD = 'no';
+end
+displine('Info','Condition number of kernel matrix',sprintf('%f',cond(KernelMatTrain_vs_Train)),options);
+displine('Info','Is kernel matrix positive definite',sprintf('%s',isPD),options);
+%figure; imagesc(KernelMatTrain_vs_Train);
 displine('Debug','index of testing objects',sprintf('%3d ',1:size(y,1)),options);
 displine('Debug','labels of testing objects (True)',sprintf('%3d ',y(:,1)),options);
 displine('Debug','labels of testing objects (Estimated)',sprintf('%3d ',labels),options);
@@ -737,27 +850,27 @@ switch options.SAGAOptimizationMethod
             'PopulationSize',20,...
             'PopInitRange',1*[-1;1]);
         [sbest, distance]=ga(J,options.SAGABaseLength,[],[],[],[],-2,2,[],gaoptions);
-	[~,path2] = tscu_saga_warp(y,sbest);
-	path1=1:length(x);
+        [~,path2] = tscu_saga_warp(y,sbest);
+        path1=1:length(x);
     case 'Simplex'
         [sbest, distance] = fminsearch(J,options.SAGAInitialSolution);
         [~, path2] = tscu_saga_warp(y,sbest);
         path1=1:length(x);
     case 'GA_MEX'
-	[path1, path2, distance]=tscu_saga_register(x,y,options.SAGABaseLength,...
-    		options.SAGAz,...
-    		options.SAGAw,...
-    		options.SAGAs,...
-    		options.SAGAsbest,...
+        [path1, path2, distance]=tscu_saga_register(x,y,options.SAGABaseLength,...
+            options.SAGAz,...
+            options.SAGAw,...
+            options.SAGAs,...
+            options.SAGAsbest,...
             options.SAGAbmat');
     otherwise
         displine('Warning',sprintf('Optimization function "%s" is not defined. Using',...
             options.SAGAOptimizationMethod),'GA',options);
-	[path1, path2, distance]=tscu_saga_register(x,y,options.SAGABaseLength,...
-    		options.SAGAz,...
-    		options.SAGAw,...
-    		options.SAGAs,...
-    		options.SAGAsbest,...
+        [path1, path2, distance]=tscu_saga_register(x,y,options.SAGABaseLength,...
+            options.SAGAz,...
+            options.SAGAw,...
+            options.SAGAs,...
+            options.SAGAsbest,...
             options.SAGAbmat');
 end
 end

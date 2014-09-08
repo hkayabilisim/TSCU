@@ -387,25 +387,25 @@ tscu(trn,tst,'Classifier','SVM','SVMKernel','gaussian');
 % The confusion matrix tells us that the first class (normal) is confused 
 % with the other classes. 
 %% Tuning gaussian kernel
-% You can change the gaussian kernel parameter sigma by using the option
-% |SVMSigma|. Here I will try the following sigma values:
+% You can change the gaussian kernel parameter gamma by using the option
+% |SVMGamma|. Here I will try the following gamma values:
 % s={pow(2,i) where i=-5,...,5}. Then I will run tscu in silent mode 
 % (remember the |LogLevel| option) collect the accuracies and plot them. 
-sigmas=2.^(-5:5);
-accuracies=zeros(1,numel(sigmas));
-for i=1:length(sigmas)
+gammas=2.^(-5:5);
+accuracies=zeros(1,numel(gammas));
+for i=1:length(gammas)
     out=tscu(trn,tst,'Classifier','SVM','SVMKernel','gaussian',...
-        'SVMSigma',sigmas(i),...
+        'SVMGamma',gammas(i),...
         'LogLevel','Alert');
     accuracies(i)=out.perf.OA;
 end
 %%
 figure
-plot(log2(sigmas),100*accuracies,'o-');
-xlabel('sigma parameter of Gaussian kernel (log2)');
+plot(log2(gammas),100*accuracies,'o-');
+xlabel('gamma parameter of Gaussian kernel (log2)');
 ylabel('Overall accuracy (%)');
 %% 
-% As you see, the classification accuracy heavily depends of the sigma 
+% As you see, the classification accuracy heavily depends of the gamma 
 % parameter. As it is being increased, the overall accuracy increases. The
 % largest accuracy (the y-axis of the biggest peak) is 97.67\%.  This is
 % very high compared to the linear SVM.

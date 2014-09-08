@@ -1,0 +1,229 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Using SVM in TSCU</title><meta name="generator" content="MATLAB 8.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-09-08"><meta name="DC.source" content="tscu_tutorialSVM.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>Using SVM in TSCU</h1><!--introduction--><p>Time Series Classification Utility (TSCU) is a collection of MATLAB&reg; and C functions written to create an easy to use framework for classification of time series. If you have a collection of time series that needs to be classified by using Support Vector Machined (SVM) then continue reading this tutorial.</p><div><ul><li>Author : Huseyin Kaya</li><li>Website: <a href="http://timewarping.org">http://timewarping.org</a></li><li>Sources: <a href="https://github.com/hkayabilisim/TSCU">https://github.com/hkayabilisim/TSCU</a></li></ul></div><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Installation</a></li><li><a href="#2">Loading a time series dataset</a></li></ul></div><h2>Installation<a name="1"></a></h2><p>TSCU is written in MATLAB&reg;, so there is no setup; just download the package and run from MATLAB&reg; Command Window. The complete package is available for free from <a href="https://github.com/hkayabilisim/TSCU">GitHub</a>. You have these two options:</p><p><b>Option 1</b> Use <a href="https://github.com/hkayabilisim/TSCU/archive/master.zip">Download ZIP</a> option to download the package in a zip file. If you choose this way you have to download the whole package to obtain the most current version of the utility.</p><p><b>Option 2</b> Another option is to use a command line to fetch the git repository. In this way, it is easy to update the package by using suitable <tt>git</tt> options. To check out the repository you can use the following command. If you don't have git on your command line, then you should install to the operating system. For further information, please take a look at <a href="http://git-scm.com">http://git-scm.com</a>.</p><pre class="language-matlab"># git <span class="string">clone</span> <span class="string">https://github.com/hkayabilisim/TSCU.git</span>
+</pre><p>In both methods, you will end up with a directory named TSCU. Open your MATLAB&reg; Command Window, and go to the TSCU/src directory. Now you are ready to run TSCU. But please be patient. Just read this tutorial and follow the step by step instructions.</p><h2>Loading a time series dataset<a name="2"></a></h2><p>For this tutorial we will use <a href="http://www.cs.ucr.edu/~eamonn/time_series_data">UCR time series repository</a> which contains more than 40 different datasets. You can send an e-mail to Dr. Keogh to download all of them. For the time being, we will use Gun_Point, ECG200, Lighting2 and yoga. If you haven't already downloaded it, then go ahead and send and e-mail to Dr. Keogh and save them under ../../UCR.</p><pre class="codeinput"><span class="comment">%                     RBF-SVM     RBF-DTW    DTW</span>
+<span class="comment">%         Data        sigma  C    sigma C    bandwith</span>
+data = { <span class="string">'Gun_Point'</span> ,0.03  ,50,  3    ,20,  0,<span class="keyword">...</span>
+    <span class="string">'ECG200'</span>         ,0.1   ,50,  0.2  ,30,  0,<span class="keyword">...</span>
+    <span class="string">'Lighting2'</span>      ,0.001 ,30,  0.01 ,30,  6,<span class="keyword">...</span>
+    <span class="string">'yoga'</span>           ,0.013 ,90,  2    ,20,  2 <span class="keyword">...</span>
+    };
+
+fprintf(<span class="string">'%-15s %-16s  %-17s  %-8s %-8s\n'</span>,<span class="keyword">...</span>
+        <span class="string">'Dataset'</span>,<span class="string">'RBF_SVM'</span>,<span class="string">'DTW_SVM'</span>,<span class="string">'DTW-1NN'</span>,<span class="string">'1-NN'</span>);
+<span class="keyword">for</span> i=1:3
+    dataname  = data{6*(i-1)+1};
+    s_rbf_svm = data{6*(i-1)+2};
+    c_rbf_svm = data{6*(i-1)+3};
+    s_dtw_svm = data{6*(i-1)+4};
+    c_dtw_svm = data{6*(i-1)+5};
+    bandwith  = data{6*(i-1)+6};
+
+    trn=load(sprintf(<span class="string">'../../UCR/%s/%s_TRAIN'</span>,dataname,dataname));
+    tst=load(sprintf(<span class="string">'../../UCR/%s/%s_TEST'</span>,dataname,dataname));
+
+    RBF_SVM=tscu(trn,tst             ,<span class="keyword">...</span>
+        <span class="string">'Classifier'</span>    ,<span class="string">'SVM'</span>       ,<span class="keyword">...</span>
+        <span class="string">'Alignment'</span>     ,<span class="string">'NONE'</span>      ,<span class="keyword">...</span>
+        <span class="string">'SVMKernel'</span>     ,<span class="string">'gaussian'</span>  ,<span class="keyword">...</span>
+        <span class="string">'SVMSoftMargin'</span> ,c_rbf_svm   ,<span class="keyword">...</span>
+        <span class="string">'SVMGamma'</span>      ,s_rbf_svm   ,<span class="keyword">...</span>
+        <span class="string">'LogLevel'</span>      ,<span class="string">'Emergency'</span>);
+
+    DTW_SVM =tscu(trn,tst            ,<span class="keyword">...</span>
+        <span class="string">'Classifier'</span>    ,<span class="string">'SVM'</span>       ,<span class="keyword">...</span>
+        <span class="string">'Alignment'</span>     ,<span class="string">'CDTW'</span>      ,<span class="keyword">...</span>
+        <span class="string">'DTWbandwidth'</span>  ,bandwith    ,<span class="keyword">...</span>
+        <span class="string">'SVMKernel'</span>     ,<span class="string">'gaussian'</span>  ,<span class="keyword">...</span>
+        <span class="string">'SVMSoftMargin'</span> ,c_dtw_svm   ,<span class="keyword">...</span>
+        <span class="string">'SVMGamma'</span>      ,s_dtw_svm   ,<span class="keyword">...</span>
+        <span class="string">'LogLevel'</span>      ,<span class="string">'Emergency'</span>);
+
+    DTW_NN =tscu(trn,tst             ,<span class="keyword">...</span>
+        <span class="string">'Classifier'</span>    ,<span class="string">'KNN'</span>       ,<span class="keyword">...</span>
+        <span class="string">'Alignment'</span>     ,<span class="string">'CDTW'</span>      ,<span class="keyword">...</span>
+        <span class="string">'DTWbandwidth'</span>  ,bandwith    ,<span class="keyword">...</span>
+        <span class="string">'LogLevel'</span>      ,<span class="string">'Emergency'</span>);
+
+    NN =tscu(trn,tst                 ,<span class="keyword">...</span>
+        <span class="string">'Classifier'</span>    ,<span class="string">'KNN'</span>       ,<span class="keyword">...</span>
+        <span class="string">'Alignment'</span>     ,<span class="string">'NONE'</span>      ,<span class="keyword">...</span>
+        <span class="string">'LogLevel'</span>      ,<span class="string">'Emergency'</span>);
+
+    fprintf(<span class="string">'%-15s %4.3f (%5.3f %2d)  %4.3f (%5.3f %2d) %7.3f  %7.3f\n'</span>,<span class="keyword">...</span>
+        dataname,RBF_SVM.perf.OA, s_rbf_svm, c_rbf_svm, <span class="keyword">...</span>
+        DTW_SVM.perf.OA, s_dtw_svm, c_dtw_svm, <span class="keyword">...</span>
+        DTW_NN.perf.OA,NN.perf.OA);
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">Dataset         RBF_SVM           DTW_SVM            DTW-1NN  1-NN    
+Gun_Point       0.960 (0.030 50)  0.627 (3.000 20)   0.913    0.913
+ECG200          0.930 (0.100 50)  0.820 (0.200 30)   0.880    0.880
+Lighting2       0.754 (0.001 30)  0.475 (0.010 30)   0.869    0.754
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Using SVM in TSCU
+% Time Series Classification Utility (TSCU) is a collection of MATLAB(R) 
+% and C functions written to create an easy to use framework for 
+% classification of time series. If you have a collection of time series 
+% that needs to be classified by using Support Vector Machined (SVM)
+% then continue reading this tutorial.
+% 
+% * Author : Huseyin Kaya
+% * Website: <http://timewarping.org>
+% * Sources: <https://github.com/hkayabilisim/TSCU>
+%% Installation
+% TSCU is written in MATLAB(R), so there is no setup; just download the
+% package and run from MATLAB(R) Command Window. The complete package is
+% available for free from <https://github.com/hkayabilisim/TSCU GitHub>. 
+% You have these two options:
+%
+% *Option 1* Use <https://github.com/hkayabilisim/TSCU/archive/master.zip Download 
+% ZIP> option to download the package in a zip file. If you choose this way
+% you have to download the whole package to obtain the most current version
+% of the utility.
+%
+% *Option 2* Another option is to use a command line to fetch the git repository. In
+% this way, it is easy to update the package by using suitable |git|
+% options. To check out the repository you can use the following command.
+% If you don't have git on your command line, then you should install to 
+% the operating system. For further information, please take a look at 
+% <http://git-scm.com>.
+%
+%   # git clone https://github.com/hkayabilisim/TSCU.git
+%
+% In both methods, you will end up with a directory named TSCU. Open your
+% MATLAB(R) Command Window, and go to the TSCU/src directory. Now you are 
+% ready to run TSCU. But please be patient. Just read this tutorial and
+% follow the step by step instructions.
+%% Loading a time series dataset
+% For this tutorial we will use 
+% <http://www.cs.ucr.edu/~eamonn/time_series_data UCR time series
+% repository> which contains more than 40 different datasets.
+% You can send an e-mail to
+% Dr. Keogh to download all of them. For the time being, we will use 
+% Gun_Point, ECG200, Lighting2 and yoga. If you 
+% haven't already downloaded it, then go ahead and send and e-mail to
+% Dr. Keogh and save them under ../../UCR.
+
+%                     RBF-SVM     RBF-DTW    DTW
+%         Data        sigma  C    sigma C    bandwith
+data = { 'Gun_Point' ,0.03  ,50,  3    ,20,  0,...
+    'ECG200'         ,0.1   ,50,  0.2  ,30,  0,...
+    'Lighting2'      ,0.001 ,30,  0.01 ,30,  6,...
+    'yoga'           ,0.013 ,90,  2    ,20,  2 ...
+    };
+
+fprintf('%-15s %-16s  %-17s  %-8s %-8s\n',...
+        'Dataset','RBF_SVM','DTW_SVM','DTW-1NN','1-NN');
+for i=1:3
+    dataname  = data{6*(i-1)+1};
+    s_rbf_svm = data{6*(i-1)+2};
+    c_rbf_svm = data{6*(i-1)+3};
+    s_dtw_svm = data{6*(i-1)+4};
+    c_dtw_svm = data{6*(i-1)+5};
+    bandwith  = data{6*(i-1)+6};
+
+    trn=load(sprintf('../../UCR/%s/%s_TRAIN',dataname,dataname));
+    tst=load(sprintf('../../UCR/%s/%s_TEST',dataname,dataname));
+    
+    RBF_SVM=tscu(trn,tst             ,...
+        'Classifier'    ,'SVM'       ,...
+        'Alignment'     ,'NONE'      ,...
+        'SVMKernel'     ,'gaussian'  ,...
+        'SVMSoftMargin' ,c_rbf_svm   ,...
+        'SVMGamma'      ,s_rbf_svm   ,...
+        'LogLevel'      ,'Emergency');
+    
+    DTW_SVM =tscu(trn,tst            ,...
+        'Classifier'    ,'SVM'       ,...
+        'Alignment'     ,'CDTW'      ,...
+        'DTWbandwidth'  ,bandwith    ,...
+        'SVMKernel'     ,'gaussian'  ,...
+        'SVMSoftMargin' ,c_dtw_svm   ,...
+        'SVMGamma'      ,s_dtw_svm   ,...
+        'LogLevel'      ,'Emergency');   
+    
+    DTW_NN =tscu(trn,tst             ,...
+        'Classifier'    ,'KNN'       ,...
+        'Alignment'     ,'CDTW'      ,...
+        'DTWbandwidth'  ,bandwith    ,...
+        'LogLevel'      ,'Emergency');
+    
+    NN =tscu(trn,tst                 ,...
+        'Classifier'    ,'KNN'       ,...
+        'Alignment'     ,'NONE'      ,...
+        'LogLevel'      ,'Emergency');
+
+    fprintf('%-15s %4.3f (%5.3f %2d)  %4.3f (%5.3f %2d) %7.3f  %7.3f\n',...
+        dataname,RBF_SVM.perf.OA, s_rbf_svm, c_rbf_svm, ...
+        DTW_SVM.perf.OA, s_dtw_svm, c_dtw_svm, ...
+        DTW_NN.perf.OA,NN.perf.OA);
+end
+##### SOURCE END #####
+--></body></html>

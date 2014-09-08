@@ -1,44 +1,98 @@
-clear all
-close all
-clc
+%% Using SVM in TSCU
+% Time Series Classification Utility (TSCU) is a collection of MATLAB(R) 
+% and C functions written to create an easy to use framework for 
+% classification of time series. If you have a collection of time series 
+% that needs to be classified by using Support Vector Machined (SVM)
+% then continue reading this tutorial.
+% 
+% * Author : Huseyin Kaya
+% * Website: <http://timewarping.org>
+% * Sources: <https://github.com/hkayabilisim/TSCU>
+%% Installation
+% TSCU is written in MATLAB(R), so there is no setup; just download the
+% package and run from MATLAB(R) Command Window. The complete package is
+% available for free from <https://github.com/hkayabilisim/TSCU GitHub>. 
+% You have these two options:
+%
+% *Option 1* Use <https://github.com/hkayabilisim/TSCU/archive/master.zip Download 
+% ZIP> option to download the package in a zip file. If you choose this way
+% you have to download the whole package to obtain the most current version
+% of the utility.
+%
+% *Option 2* Another option is to use a command line to fetch the git repository. In
+% this way, it is easy to update the package by using suitable |git|
+% options. To check out the repository you can use the following command.
+% If you don't have git on your command line, then you should install to 
+% the operating system. For further information, please take a look at 
+% <http://git-scm.com>.
+%
+%   # git clone https://github.com/hkayabilisim/TSCU.git
+%
+% In both methods, you will end up with a directory named TSCU. Open your
+% MATLAB(R) Command Window, and go to the TSCU/src directory. Now you are 
+% ready to run TSCU. But please be patient. Just read this tutorial and
+% follow the step by step instructions.
+%% Loading a time series dataset
+% For this tutorial we will use 
+% <http://www.cs.ucr.edu/~eamonn/time_series_data UCR time series
+% repository> which contains more than 40 different datasets.
+% You can send an e-mail to
+% Dr. Keogh to download all of them. For the time being, we will use 
+% Gun_Point, ECG200, Lighting2 and yoga. If you 
+% haven't already downloaded it, then go ahead and send and e-mail to
+% Dr. Keogh and save them under ../../UCR.
 
-n=29;
-k=8;
-u = zeros(n,k);
-nk = floor(n/k);
-lastpiece = n-nk*(k-1);
-for i=0:k-2
-    u(nk*i+1:nk*i+nk,i+1)=1;
+%                     RBF-SVM     RBF-DTW    DTW
+%         Data        sigma  C    sigma C    bandwith
+data = { 'Gun_Point' ,0.03  ,50,  3    ,20,  0,...
+    'ECG200'         ,0.1   ,50,  0.2  ,30,  0,...
+    'Lighting2'      ,0.001 ,30,  0.01 ,30,  6,...
+    'yoga'           ,0.013 ,90,  2    ,20,  2 ...
+    };
+
+fprintf('%-15s %-15s %-15s %-4s %-4s\n',...
+        'Dataset','RBF_SVM','DTW_SVM','DTW-1NN','1-NN');
+for i=1:3
+    dataname  = data{6*(i-1)+1};
+    s_rbf_svm = data{6*(i-1)+2};
+    c_rbf_svm = data{6*(i-1)+3};
+    s_dtw_svm = data{6*(i-1)+4};
+    c_dtw_svm = data{6*(i-1)+5};
+    bandwith  = data{6*(i-1)+6};
+
+    trn=load(sprintf('../../UCR/%s/%s_TRAIN',dataname,dataname));
+    tst=load(sprintf('../../UCR/%s/%s_TEST',dataname,dataname));
+    
+    RBF_SVM=tscu(trn,tst             ,...
+        'Classifier'    ,'SVM'       ,...
+        'Alignment'     ,'NONE'      ,...
+        'SVMKernel'     ,'gaussian'  ,...
+        'SVMSoftMargin' ,c_rbf_svm   ,...
+        'SVMGamma'      ,s_rbf_svm   ,...
+        'LogLevel'      ,'Emergency');
+    
+    DTW_SVM =tscu(trn,tst            ,...
+        'Classifier'    ,'SVM'       ,...
+        'Alignment'     ,'CDTW'      ,...
+        'DTWbandwidth'  ,bandwith    ,...
+        'SVMKernel'     ,'gaussian'  ,...
+        'SVMSoftMargin' ,c_dtw_svm   ,...
+        'SVMGamma'      ,s_dtw_svm   ,...
+        'LogLevel'      ,'Emergency');   
+    
+    DTW_NN =tscu(trn,tst             ,...
+        'Classifier'    ,'KNN'       ,...
+        'Alignment'     ,'CDTW'      ,...
+        'DTWbandwidth'  ,bandwith    ,...
+        'LogLevel'      ,'Emergency');
+    
+    NN =tscu(trn,tst                 ,...
+        'Classifier'    ,'KNN'       ,...
+        'Alignment'     ,'NONE'      ,...
+        'LogLevel'      ,'Emergency');
+
+    fprintf('%-15s %4.3f (%5.3f %2d) %4.3f (%5.3f %2d) %4.3f %4.3f\n',...
+        dataname,RBF_SVM.perf.OA, s_rbf_svm, c_rbf_svm, ...
+        DTW_SVM.perf.OA, s_dtw_svm, c_dtw_svm, ...
+        DTW_NN.perf.OA,NN.perf.OA);
 end
-u(n-lastpiece+1:n,k)=1;
-
-integration    = @(s) cumsum(s)/(size(s,1)-1);
-bmat = integration(integration(u));   
-
-t = linspace(0,1,29);
-x = sin(2*pi*t);
-y = sin(2*pi*t.^2);
-
-[path1,path2,d]=tscu_saga_register(x, y, k, zeros(1,n), zeros(1,n), zeros(1,k),zeros(1,k),bmat');
-% XCODE
-xx = [ 0.00000  0.22252  0.43388  0.62349  0.78183  0.90097  0.97493  1.00000  0.97493  0.90097  0.78183  0.62349  0.43388  0.22252  0.00000 -0.22252 -0.43388 -0.62349 -0.78183 -0.90097 -0.97493 -1.00000 -0.97493 -0.90097 -0.78183 -0.62349 -0.43388 -0.22252 -0.00000 ]';
-xy = [ 0.00000  0.00801  0.03205  0.07207  0.12788  0.19902  0.28453  0.38268  0.49072  0.60451  0.71835  0.82473  0.91441  0.97668  1.00000  0.97311  0.88660  0.73487  0.51839  0.24589 -0.06407 -0.38268 -0.67230 -0.89028 -0.99538 -0.95636 -0.76145 -0.42665 -0.00000 ]';
-xz = [ 0.00000  0.02477  0.09112  0.19459  0.33226  0.48931  0.65347  0.80509  0.92332  0.98697  0.98091  0.89099  0.70816  0.45506  0.16024 -0.14568 -0.43244 -0.67738 -0.84975 -0.94747 -0.98705 -0.96263 -0.87420 -0.76921 -0.60902 -0.45785 -0.29235 -0.13688 -0.00000 ]';
-xpath1 = [ 1.00000  2.00000  3.00000  4.00000  5.00000  6.00000  7.00000  8.00000  9.00000 10.00000 11.00000 12.00000 13.00000 14.00000 15.00000 16.00000 17.00000 18.00000 19.00000 20.00000 21.00000 22.00000 23.00000 24.00000 25.00000 26.00000 27.00000 28.00000 29.00000 ]';
-xpath2 = [ 1.00000  2.69711  4.34136  5.93776  7.48631  8.98702 10.43005 11.81542 13.14311 14.44132 15.71003 16.94925 18.12338 19.23241 20.27635 21.25614 22.17179 23.02329 23.81407 24.54414 25.21350 25.83930 26.42152 26.96018 27.45528 27.90681 28.31477 28.67917 29.00000 ]';
-xd = [ 0.04496 ]';
-% Comparison
-figure
-plot(x,'b'); hold on; plot(xx,'r'); legend('Matlab','Xcode'); title('x');
-figure
-plot(y,'b'); hold on; plot(xy,'r'); legend('Matlab','Xcode'); title('y');
-figure
-plot(path1,'b'); hold on; plot(xpath1,'r'); legend('Matlab','Xcode'); title('path1');
-figure
-plot(path2,'b'); hold on; plot(xpath2,'r'); legend('Matlab','Xcode'); title('path2');
-figure
-plot(interp1(1:n,x,path1),'b'); hold on; plot(interp1(1:n,y,path2),'r'); legend('x','y registered MATLAB');
-figure
-plot(interp1(1:n,xx,xpath1),'b'); hold on; plot(interp1(1:n,xy,xpath2),'r'); legend('x','y registered XCODE');
-fprintf('Matlab: %8.5f Xcode: %8.5f\n',d,xd);
-
