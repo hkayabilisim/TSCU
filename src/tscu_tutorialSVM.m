@@ -50,13 +50,14 @@ data = { 'Gun_Point' ,0.03  ,50,  3    ,20,  0,...
     'yoga'           ,0.013 ,90,  2    ,20,  2 ...
     };
 
+
 fprintf('%-15s %-16s  %-17s  %-8s %-8s\n',...
         'Dataset','RBF_SVM','DTW_SVM','DTW-1NN','1-NN');
-for i=1:3
+for i=1:1
     dataname  = data{6*(i-1)+1};
-    s_rbf_svm = data{6*(i-1)+2};
+    s_rbf_svm = 1/data{6*(i-1)+2}^2;
     c_rbf_svm = data{6*(i-1)+3};
-    s_dtw_svm = data{6*(i-1)+4};
+    s_dtw_svm = 1/data{6*(i-1)+4}^2;
     c_dtw_svm = data{6*(i-1)+5};
     bandwith  = data{6*(i-1)+6};
 

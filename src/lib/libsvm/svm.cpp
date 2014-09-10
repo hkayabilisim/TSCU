@@ -475,8 +475,8 @@ void Solver::reconstruct_gradient()
 		if(is_free(j))
 			nr_free++;
 
-	if(2*nr_free < active_size)
-		info("\nWARNING: using -h 0 may be faster\n");
+	/* if(2*nr_free < active_size)
+		info("\nWARNING: using -h 0 may be faster\n"); */
 
 	if (nr_free*l > 2*active_size*(l-active_size))
 	{
