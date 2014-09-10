@@ -43,7 +43,7 @@ fprintf('%-20s %-s\n'       ,''       ,'     SVM GDTW Error (%)');
 fprintf('%-20s %-15s %-15s\n','Dataset','found by TSCU','in the Article');
 fprintf('%-20s %-15s %-15s\n','-------','-------------','--------------');
 
-for i=[1 2 18]
+for i=1:19
     dataname  = data{2*(i-1)+1};
     expected  = data{2*(i-1)+2};
     trn=load(sprintf('../../UCR/%s/%s_TRAIN',dataname,dataname));
