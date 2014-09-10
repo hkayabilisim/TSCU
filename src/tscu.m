@@ -559,7 +559,7 @@ for ig=1:length(glist);
     end
     
     for ic=1:length(clist)
-        svmopts=sprintf('-t 4 -h 1 -v %d -c %f',fold,...
+        svmopts=sprintf('-t 4 -h 1 -v %d -c %f -q',fold,...
             clist(ic));
         cv_accuracies(ig,ic) = svmtrain(x(:,1),[(1:nx)',kernel], svmopts);
         displine('Info','Grid search [C, gamma] pair',...
@@ -588,7 +588,7 @@ fold = options.CrossValidation;
 Kernel=kernel_linear(x(:,2:end),x(:,2:end));
 cv_accuracies=zeros(length(clist),1);
 for i=1:length(clist)
-    svmopts=sprintf('-t 4 -h 1 -v %d -c %f',fold,clist(i));
+    svmopts=sprintf('-t 4 -h 1 -v %d -c %f -q',fold,clist(i));
     cv_accuracies(i) = svmtrain(x(:,1),[(1:nx)',Kernel], svmopts);
     displine('Info','Grid search [C] ',...
         sprintf('%12.5f [acc:%4f]',clist(i),cv_accuracies(i)),options);
@@ -654,7 +654,7 @@ elseif strcmpi(kerneltype,'gaussian')
         end
     end
 end
-svmopts=sprintf('-t 4 -h 1 -c %f',c); % Precomputed kernel matrix
+svmopts=sprintf('-t 4 -h 1 -c %f -q',c); % Precomputed kernel matrix
 
 model = svmtrain(x(:,1),[(1:nx)',KernelTrain_vs_Train], svmopts);
 [labels,~,~] = svmpredict(y(:,1),[(1:ny)',KernelTest_vs_Train], model);
