@@ -134,36 +134,36 @@ if mod(optarglength,2) ~= 0
     error('tscu:argerror','The number of optional parameters should be even');
 else
     for i=1:2:optarglength
-        switch varargin{i}
-            case 'Classifier'
+        arg = varargin{i};
+        if strcmpi(arg,'Classifier')
                 options.classifier = varargin{i+1};
-            case 'Alignment'
+        elseif strcmpi(arg,'Alignment')
                 options.alignment = varargin{i+1};
-            case 'SVMKernel'
+        elseif strcmpi(arg,'SVMKernel')
                 options.svmkernel = varargin{i+1};
-            case 'SVMSoftMargin'
+        elseif strcmpi(arg,'SVMSoftMargin')
                 options.svmsoftmargin = varargin{i+1};
-            case 'SVMGamma'
+        elseif strcmpi(arg,'SVMGamma')
                 options.svmgamma = varargin{i+1};
-            case 'DTWbandwidth'
+        elseif strcmpi(arg,'DTWbandwidth')
                 options.DTWbandwidth = varargin{i+1};
-            case 'LogLevel'
+        elseif strcmpi(arg,'LogLevel')
                 options.loglevel = varargin{i+1};
-            case 'MATLABPool'
+        elseif strcmpi(arg,'MATLABPool')
                 options.MATLABPool = varargin{i+1};
-            case 'SAGAOptimizationMethod'
+        elseif strcmpi(arg,'SAGAOptimizationMethod')
                 options.SAGAOptimizationMethod = varargin{i+1};
-            case 'SAGABaseLength'
+        elseif strcmpi(arg,'SAGABaseLength')
                 options.SAGABaseLength = varargin{i+1};
-            case 'SAGAInitialSolution'
+        elseif strcmpi(arg,'SAGAInitialSolution')
                 options.SAGAInitialSolution = varargin{i+1};
-            case 'CrossValidation'
+        elseif strcmpi(arg,'CrossValidation')
                 options.CrossValidation = varargin{i+1};
-            case 'DisplayInputData'
+        elseif strcmpi(arg,'DisplayInputData')
                 options.DisplayInputData = varargin{i+1};
-            case 'DisplayAlignment'
+        elseif strcmpi(arg,'DisplayAlignment')
                 options.DisplayAlignment = varargin{i+1};
-            case 'DumpDistanceMatrix'
+        elseif strcmpi(arg,'DumpDistanceMatrix')
                 options.DumpDistanceMatrix = varargin{i+1};
         end
     end
@@ -181,24 +181,20 @@ if options.SAGABaseLength ~= length(options.SAGAInitialSolution)
 end
 
 % Check the optimization method
-switch options.SAGAOptimizationMethod
-    case 'GA'
-    case 'Simplex'
-    case 'GA_MEX'
-    otherwise
-        displine('Warning',sprintf('The method "%s" is not recognized',...
-            options.SAGAOptimizationMethod),'GA_MEX will be used',options);
-        options.SAGAOptimizationMethod = 'GA_MEX';
+if sum(strcmpi(options.SAGAOptimizationMethod,...
+        {'GA','Simplex','GA_MEX'})) == 0    
+    displine('Warning',sprintf('The method "%s" is not recognized',...
+        options.SAGAOptimizationMethod),'GA_MEX will be used',options);
+    options.SAGAOptimizationMethod = 'GA_MEX';
 end
 
-switch options.alignment
-    case 'NONE'
+if strcmpi(options.alignment,'NONE')
         options.alignmentfunction = @nonealignment;
-    case 'DTW'
+elseif strcmpi(options.alignment,'DTW')
         options.alignmentfunction = @dtwalignment;
-    case 'CDTW'
+elseif strcmpi(options.alignment,'CDTW')
         options.alignmentfunction = @cdtwalignment;
-    case 'SAGA'
+elseif strcmpi(options.alignment,'SAGA')
         options.alignmentfunction = @sagaalignment;
         n = size(x,2)-1;
         k = options.SAGABaseLength;
@@ -215,9 +211,9 @@ switch options.alignment
         u(n-lastpiece-1:n,k)=1;
         integration    = @(s) cumsum(s)/(size(s,1)-1);
         options.SAGAbmat = integration(integration(u));
-    case 'CREG'
+elseif strcmpi(options.alignment,'CREG')
         options.alignmentfunction = @cregalignment;
-    otherwise
+else
         options.alignmentfunction = @nonealignment;
 end
 
@@ -227,11 +223,11 @@ displine('Info','Size of testing set',sprintf('%d',size(y,1)),options);
 displine('Info','Time series length',sprintf('%d',size(x,2)-1),options);
 
 displine('Info','Classification method',options.classifier,options);
-if strcmp(options.classifier,'SVM')
+if strcmpi(options.classifier,'SVM')
     displine('Info','SVM kernel type',options.svmkernel,options);
     displine('Info','SVM Soft margin',...
         sprintf('%8.5f ',options.svmsoftmargin),options);
-    if strcmp(options.svmkernel,'gaussian')
+    if strcmpi(options.svmkernel,'gaussian')
         displine('Info','SVM gamma parameter',...
             sprintf('%8.5f ',options.svmgamma),options);
     end
@@ -253,7 +249,7 @@ else
     displine('Info','Cross validation',...
         sprintf('%d',options.CrossValidation),options);
 end
-if strcmp(options.alignment,'SAGA')
+if strcmpi(options.alignment,'SAGA')
     displine('Info','SAGA number of spline bases',...
         sprintf('%d',options.SAGABaseLength),options);
     displine('Info','SAGA optimization method',...
@@ -261,7 +257,7 @@ if strcmp(options.alignment,'SAGA')
     displine('Info','SAGA initial solution',...
         sprintf('%5.2f ',options.SAGAInitialSolution),options);
 end
-if strcmp(options.alignment,'CDTW')
+if strcmpi(options.alignment,'CDTW')
     displine('Info','DTW band width (%)',...
         sprintf('%5.2f',options.DTWbandwidth),options);
 end
@@ -269,7 +265,8 @@ if ~isempty(options.MATLABPool)
     displine('Info','MATLAB Pool',options.MATLABPool,options);
 end
 
-if numel(options.DisplayAlignment{1}) > 0 && numel(options.DisplayAlignment{2}) > 0
+if numel(options.DisplayAlignment{1}) > 0 && ...
+   numel(options.DisplayAlignment{2}) > 0
     displine('Info','Displaying alignments (trn)',...
         sprintf('%d',options.DisplayAlignment{1}),options);
     displine('Info','Displaying alignments (tst)',...
@@ -281,20 +278,18 @@ displine('Info','Dumping distance matrix',options.DumpDistanceMatrix,options);
 
 
 % Displaying Input Data
-if strcmp(options.DisplayInputData,'yes')
+if strcmpi(options.DisplayInputData,'yes')
     displayInputData(x,y,options);
 end
 displayClassInfo(x,y,options);
 
-
 % Classification
 tic
-switch options.classifier
-    case 'K-NN'
+if strcmpi(options.classifier,'K-NN')
         labels = nnclassifier(x,y,options);
-    case 'SVM'
+elseif strcmpi(options.classifier,'SVM')
         labels = svmclassifier(x,y,options);
-    otherwise
+else
         labels = nnclassifier(x,y,options);
 end
 classification_time = toc;
@@ -411,25 +406,24 @@ function i = getloglevelindex(l)
 %GETLOGLEVELINDEX  Conversion of log level string.
 %   GETLOGLEVELINDEX(L) gets the corresponding integer for a given
 %   log level L.
-switch l
-    case 'Emergency'
-        i = 0;
-    case 'Alert'
-        i = 1;
-    case 'Critical'
-        i = 2;
-    case 'Error'
-        i = 3;
-    case 'Warning'
-        i = 4;
-    case 'Notice'
-        i = 5;
-    case 'Info'
-        i = 6;
-    case 'Debug'
-        i = 7;
-    otherwise
-        i = 6;
+if strcmpi(l,'Emergency')
+    i = 0;
+elseif strcmpi(l,'Alert')
+    i = 1;
+elseif strcmpi(l,'Critical')
+    i = 2;
+elseif strcmpi(l,'Error')
+    i = 3;
+elseif strcmpi(l,'Warning')
+    i = 4;
+elseif strcmpi(l,'Notice')
+    i = 5;
+elseif strcmpi(l,'Info')
+    i = 6;
+elseif strcmpi(l,'Debug')
+    i = 7;
+else
+    i = 6;
 end
 end
 function [trn,tst]=divideset(x,options)
@@ -490,19 +484,18 @@ for i = 1 : n*m
     xObject = x(xIdx(i),2:end);
     path1 = 1:numel(xObject);
     path2 = 1:numel(yObject);
-    switch Alignment
-        case 'NONE'
-            [alldistances(i), path1, path2] = nonealignment(xObject,yObject,options);
-        case 'DTW'
-            [alldistances(i), path1, path2] = dtwalignment(xObject,yObject,options);
-        case 'CDTW'
-            [alldistances(i), path1, path2] = cdtwalignment(xObject,yObject,options);
-        case 'SAGA'
-            [alldistances(i), path1, path2] = sagaalignment(xObject,yObject,options);
-        case 'CREG'
-            [alldistances(i), path1, path2] = cregalignment(xObject,yObject,options);
-        otherwise
-            [alldistances(i), path1, path2] = nonealignment(xObject,yObject,options);
+    if strcmpi(Alignment,'NONE')
+        [alldistances(i), path1, path2] = nonealignment(xObject,yObject,options);
+    elseif strcmpi(Alignment,'DTW')
+        [alldistances(i), path1, path2] = dtwalignment(xObject,yObject,options);
+    elseif strcmpi(Alignment,'CDTW')
+        [alldistances(i), path1, path2] = cdtwalignment(xObject,yObject,options);
+    elseif strcmpi(Alignment,'SAGA')
+        [alldistances(i), path1, path2] = sagaalignment(xObject,yObject,options);
+    elseif strcmpi(Alignment,'CREG')
+        [alldistances(i), path1, path2] = cregalignment(xObject,yObject,options);
+    else
+        [alldistances(i), path1, path2] = nonealignment(xObject,yObject,options);
     end
     displine('Debug',sprintf('[%5d of %5d] dist(%4d,%4d)',i,n*m,yIdx(i),xIdx(i)),...
         sprintf('%f',alldistances(i)),options);
@@ -518,7 +511,7 @@ displine('Debug','labels of testing objects (True)',sprintf('%3d ',ylabels),opti
 displine('Debug','labels of testing objects (Estimated)',sprintf('%3d ',labels),options);
 displine('Debug','closest training objects',sprintf('%3d ',mindistanceIdx),options);
 
-if strcmp(options.DumpDistanceMatrix,'yes')
+if strcmpi(options.DumpDistanceMatrix,'yes')
     save(sprintf('tscu_distancematrix_%s.txt',Alignment),'distancematrix','-ascii');
 end
 
@@ -528,7 +521,6 @@ function z = kernel_linear(x,y)
 z = x*y';
 end
 
-
 function z = kernel_gaussian(x,y,gamma)
 
 nx = size(x,1);
@@ -537,61 +529,52 @@ z=zeros(nx,ny);
 
 for i=1:nx
     for j=1:ny
-        z(i,j)=exp(-gamma*( (x(i,:)-y(j,:))*(x(i,:)-y(j,:))'));
+        z(i,j)=exp(-gamma*((x(i,:)-y(j,:))*(x(i,:)-y(j,:))'));
     end
 end
 end
 
 
-function best_c = svmmodelselection_gaussian(x,options)
+function [best_c,best_gamma] = svmmodelselection_gaussian(x,options)
 % SVM Model selection
 nx=size(x,1);
-xlen=size(x,2)-1;
 
-cv_accuracies=zeros(length(options.svmgamma),length(options.svmsoftmargin));
+glist = options.svmgamma;
+clist = options.svmsoftmargin;
+fold  = options.CrossValidation;
 
-for igamma=1:length(options.svmgamma);
-    gamma=options.svmgamma(igamma);
-    Kernel = zeros(nx,nx);
+cv_accuracies=zeros(length(glist),length(clist));
+
+for ig=1:length(glist);
+    gamma=glist(ig);
+    kernel = zeros(nx,nx);    
     
-    if strcmp(options.alignment,'NONE')
-        Kernel = kernel_gaussian(x(:,2:end),x(:,2:end),gamma);
-    else
-        for i=1:nx
-            for j=1:nx
-                [~,path1, path2]=...
-                    options.alignmentfunction(x(i,2:end),...
-                    x(j,2:end),options);
-                xAligned = interp1(1:xlen,x(i,2:end),path1);
-                yAligned = interp1(1:xlen,x(j,2:end),path2);
-                displine('Debug','Aligning',...
-                    sprintf('%5d .vs. %5d',i,j),options);
-                Kernel(i,j)=kernel_gaussian(xAligned,yAligned,gamma);
-                %Kernel(j,i)=Kernel(i,j);
-            end
+    for i=1:nx
+        for j=1:nx
+            [distance,~,~]=...
+                options.alignmentfunction(x(i,2:end),...
+                x(j,2:end),options);
+            kernel(i,j)=exp(-gamma*distance^2);
         end
-        %for i=1:nx
-        %    Kernel(i,i)=kernel_gaussian(x(i,2:end),x(i,2:end),gamma);
-        %end
-        
     end
     
-    for ic=1:length(options.svmsoftmargin)
-        svmopts=sprintf('-t 4 -h 0 -v %d -c %f -g %f',options.CrossValidation,...
-            options.svmsoftmargin(ic),options.svmgamma(igamma));
-        cv_accuracies(igamma,ic) = svmtrain(x(:,1),[(1:nx)',Kernel], svmopts);
+    for ic=1:length(clist)
+        svmopts=sprintf('-t 4 -h 1 -v %d -c %f',fold,...
+            clist(ic));
+        cv_accuracies(ig,ic) = svmtrain(x(:,1),[(1:nx)',kernel], svmopts);
         displine('Info','Grid search [C, gamma] pair',...
-    sprintf('%12.5f %12.5f [acc:%4f]',options.svmsoftmargin(ic),...
-    options.svmgamma(igamma),cv_accuracies(igamma,ic)),options);
+            sprintf('%12.5f %12.5f [acc:%4f]',clist(ic),...
+            glist(ig),cv_accuracies(ig,ic)),options);
     end
 end
 
 [~,best_c_index    ] = max(max(cv_accuracies));
 [~,best_gamma_index] = max(cv_accuracies(:,best_c_index));
 
-best_gamma=options.svmgamma(best_gamma_index);
-best_c=options.svmsoftmargin(best_c_index);
+best_gamma   =glist(best_gamma_index);
+best_c       =clist(best_c_index);
 best_accuracy=cv_accuracies(best_gamma_index,best_c_index);
+
 displine('Info','Best [C, gamma] pair',...
     sprintf('%12.5f %12.5f [acc:%4f]',best_c,best_gamma,best_accuracy),options);
 end
@@ -599,44 +582,20 @@ end
 function best_c = svmmodelselection_linear(x,options)
 % SVM Model selection
 nx=size(x,1);
-xlen=size(x,2)-1;
+clist = options.svmsoftmargin;
+fold = options.CrossValidation;
 
-Kernel = zeros(nx,nx);
-
-if strcmp(options.alignment,'NONE')
-    Kernel = kernel_linear(x(:,2:end),x(:,2:end));
-else
-    for i=1:nx-1
-        for j=i+1:nx
-            [~,path1, path2]=...
-                options.alignmentfunction(x(i,2:end),...
-                x(j,2:end),options);
-            xAligned = interp1(1:xlen,x(i,2:end),path1);
-            yAligned = interp1(1:xlen,x(j,2:end),path2);
-            displine('Debug','Aligning',...
-                sprintf('%5d .vs. %5d',i,j),options);
-            Kernel(i,j)=kernel_linear(xAligned,yAligned);
-            Kernel(j,i)=Kernel(i,j);
-        end
-    end
-    for i=1:nx
-        Kernel(i,i)=kernel_linear(x(i,2:end),x(i,2:end));
-    end
-    
-end
-
-cv_accuracies=zeros(length(options.svmsoftmargin),1);
-for i=1:length(options.svmsoftmargin)
-    svmopts=sprintf('-t 4 -h 0 -v %d -c %f',options.CrossValidation,...
-        options.svmsoftmargin(i));
+Kernel=kernel_linear(x(:,2:end),x(:,2:end));
+cv_accuracies=zeros(length(clist),1);
+for i=1:length(clist)
+    svmopts=sprintf('-t 4 -h 1 -v %d -c %f',fold,clist(i));
     cv_accuracies(i) = svmtrain(x(:,1),[(1:nx)',Kernel], svmopts);
     displine('Info','Grid search [C] ',...
-        sprintf('%12.5f [acc:%4f]',options.svmsoftmargin(i),...
-        cv_accuracies(i)),options);
+        sprintf('%12.5f [acc:%4f]',clist(i),cv_accuracies(i)),options);
 end
 
 [best_accuracy,best_c_index]=max(cv_accuracies);
-best_c=options.svmsoftmargin(best_c_index);
+best_c=clist(best_c_index);
 displine('Info','Best C parameter',...
     sprintf('%12.5f [acc:%4f]',best_c,best_accuracy),options);
 end
@@ -645,92 +604,76 @@ function labels = svmclassifier(x,y,options)
 %SVMCLASSIFIER Support Vector Machine Classification
 %   LABELS = SVMCLASSIFIER(X,Y,OPTIONS)
 
-c=options.svmsoftmargin;
-gamma=options.svmgamma;
-if numel(options.svmsoftmargin) > 1 || numel(options.svmgamma) > 1 
-    if strcmp(options.svmkernel,'linear')
-        c = svmmodelselection_linear(x,options);
-    elseif strcmp(options.svmkernel,'gaussian')
-        gamma = svmmodelselection_gaussian(x,options);
-    end
-end
-
+% scaling code if needed
+% trn = x(:,2:end);
+% tst = y(:,2:end);
+% minimums = min(trn, [], 1);
+% ranges = max(trn, [], 1) - minimums;
+% trn = (trn - repmat(minimums, size(trn, 1), 1)) ./ repmat(ranges, size(trn, 1), 1);
+% tst = (tst - repmat(minimums, size(tst, 1), 1)) ./ repmat(ranges, size(tst, 1), 1);
+% x(:,2:end)=trn;
+% y(:,2:end)=tst;
 
 nx=size(x,1);
 ny=size(y,1);
 xlen=size(x,2)-1;
-KernelMatTrain_vs_Train = zeros(nx,nx);
-KernelMatTest_vs_Train = zeros(ny,nx);
-
-if strcmp(options.alignment,'NONE')
-    if strcmp(options.svmkernel,'linear')
-        KernelMatTrain_vs_Train = kernel_linear(x(:,2:end),x(:,2:end));
-        KernelMatTest_vs_Train  = kernel_linear(y(:,2:end),x(:,2:end));
-    elseif strcmp(options.svmkernel,'gaussian')
-        KernelMatTrain_vs_Train = kernel_gaussian(x(:,2:end),x(:,2:end),gamma);
-        KernelMatTest_vs_Train  = kernel_gaussian(y(:,2:end),x(:,2:end),gamma);
-    end
-else
-    for i=1:nx
-        for j=1:nx
-            [~, path1, path2]=...
-                options.alignmentfunction(x(i,2:end),...
-                x(j,2:end),options);
-            xAligned = interp1(1:xlen,x(i,2:end),path1);
-            yAligned = interp1(1:xlen,x(j,2:end),path2);
-            displine('Debug','Aligning',...
-                sprintf('%5d .vs. %5d',i,j),options);
-            if strcmp(options.svmkernel,'linear')
-                KernelMatTrain_vs_Train(i,j)=kernel_linear(xAligned,yAligned);
-            elseif strcmp(options.svmkernel,'gaussian')
-                KernelMatTrain_vs_Train(i,j)=...
-                    kernel_gaussian(xAligned,yAligned,gamma);
-            end
-            %KernelMatTrain_vs_Train(j,i)=KernelMatTrain_vs_Train(i,j);
-        end
-     end
-%     for i=1:nx
-%         if strcmp(options.svmkernel,'linear')
-%             KernelMatTrain_vs_Train(i,i)=kernel_linear(x(i,2:end),x(i,2:end));
-%         elseif strcmp(options.svmkernel,'gaussian')
-%             KernelMatTrain_vs_Train(i,i)=...
-%                 kernel_gaussian(x(i,2:end),x(i,2:end),gamma);
-%         end
-%     end
-    for i=1:ny
-        for j=1:nx
-            [~, path1, path2]=...
-                options.alignmentfunction(y(i,2:end),...
-                x(j,2:end),options);
-            xAligned = interp1(1:xlen,x(j,2:end),path1);
-            yAligned = interp1(1:xlen,y(i,2:end),path2);
-            displine('Debug','Aligning',...
-                sprintf('%5d .vs. %5d',i,j),options);
-            if strcmp(options.svmkernel,'linear')
-                KernelMatTest_vs_Train(i,j)=...
-                    kernel_linear(xAligned,yAligned);
-            elseif strcmp(options.svmkernel,'gaussian')
-                KernelMatTest_vs_Train(i,j)=...
-                    kernel_gaussian(xAligned,yAligned,gamma);
-            end
-        end
+c=options.svmsoftmargin;
+gamma=options.svmgamma;
+kerneltype = options.svmkernel;
+% Kernel parameters should be optimized
+if numel(c) > 1 || numel(gamma) > 1
+    if strcmpi(kerneltype,'linear')
+        c = svmmodelselection_linear(x,options);
+    elseif strcmpi(kerneltype,'gaussian')
+        [c,gamma] = svmmodelselection_gaussian(x,options);
     end
 end
 
-svmopts=sprintf('-t 4 -h 0 -c %f',c); % Precomputed kernel matrix
+KernelTrain_vs_Train = zeros(nx,nx);
+KernelTest_vs_Train = zeros(ny,nx);
 
-model = svmtrain(x(:,1),[(1:nx)',KernelMatTrain_vs_Train], svmopts);
-[labels,~,~] = svmpredict(y(:,1),[(1:ny)',KernelMatTest_vs_Train], model);
+if strcmpi(kerneltype,'linear')
+    KernelTrain_vs_Train = kernel_linear(x(:,2:end),x(:,2:end));
+    KernelTest_vs_Train  = kernel_linear(y(:,2:end),x(:,2:end));
+elseif strcmpi(kerneltype,'gaussian')
+    for i=1:nx
+        for j=1:nx
+            [distance,~,~]=...
+                options.alignmentfunction(x(i,2:end),...
+                x(j,2:end),options);
+            KernelTrain_vs_Train(i,j)= exp(-gamma*distance^2);
+        end
+    end
+    
+    for i=1:ny
+        for j=1:nx            
+            [distance, ~, ~]=...
+                options.alignmentfunction(y(i,2:end),...
+                x(j,2:end),options);
+            KernelTest_vs_Train(i,j)=exp(-gamma*distance^2);            
+        end
+    end
+end
+svmopts=sprintf('-t 4 -h 1 -c %f',c); % Precomputed kernel matrix
 
-[~,p]=chol(KernelMatTrain_vs_Train);
-if p <= 0 
+model = svmtrain(x(:,1),[(1:nx)',KernelTrain_vs_Train], svmopts);
+[labels,~,~] = svmpredict(y(:,1),[(1:ny)',KernelTest_vs_Train], model);
+
+[~,p]=chol(KernelTrain_vs_Train);
+if p <= 0
     isPD = 'yes';
 else
     isPD = 'no';
 end
-displine('Info','Condition number of kernel matrix',sprintf('%f',cond(KernelMatTrain_vs_Train)),options);
-displine('Info','Is kernel matrix positive definite',sprintf('%s',isPD),options);
-%figure; imagesc(KernelMatTrain_vs_Train);
+if max(max(KernelTrain_vs_Train-KernelTrain_vs_Train')) < eps
+    isSymmetric = 'yes';
+else
+    isSymmetric = 'no';
+end
+displine('Info','Condition number of kernel matrix',sprintf('%e',cond(KernelTrain_vs_Train)),options);
+displine('Info','Is kernel matrix symmetric',isSymmetric,options);
+displine('Info','Is kernel matrix positive definite',isPD,options);
+%figure; imagesc(KernelTrain_vs_Train);
 displine('Debug','index of testing objects',sprintf('%3d ',1:size(y,1)),options);
 displine('Debug','labels of testing objects (True)',sprintf('%3d ',y(:,1)),options);
 displine('Debug','labels of testing objects (Estimated)',sprintf('%3d ',labels),options);
@@ -798,7 +741,7 @@ box on
 plot(xgrid,meshgrid(xgrid,ygrid),'k:');
 plot(meshgrid(xgrid,ygrid),ygrid,'k:');
 
-if strcmp(Alignment,'CDTW')
+if strcmpi(Alignment,'CDTW')
     band=floor(options.DTWbandwidth*nx/100);
     plot([1 1    nx-band nx],[1 band ny      ny],'k');
     plot([1 band nx      nx],[1 1    ny-band ny],'k');
@@ -841,37 +784,36 @@ function [distance, path1, path2] = sagaalignment(x,y,options)
 %   the distance in DISTANCE and warping paths in PATH1 and PATH2.
 
 J = @(s) tscu_saga_cost(x,y,s,options.SAGAw,options.SAGAz);
-switch options.SAGAOptimizationMethod
-    case 'GA'
-        gaoptions = gaoptimset('Generations',100,...
-            'TolFun', eps, ...
-            'StallGenLimit',40,...
-            'Display','off',...
-            'PopulationSize',20,...
-            'PopInitRange',1*[-1;1]);
-        [sbest, distance]=ga(J,options.SAGABaseLength,[],[],[],[],-2,2,[],gaoptions);
-        [~,path2] = tscu_saga_warp(y,sbest);
-        path1=1:length(x);
-    case 'Simplex'
-        [sbest, distance] = fminsearch(J,options.SAGAInitialSolution);
-        [~, path2] = tscu_saga_warp(y,sbest);
-        path1=1:length(x);
-    case 'GA_MEX'
-        [path1, path2, distance]=tscu_saga_register(x,y,options.SAGABaseLength,...
-            options.SAGAz,...
-            options.SAGAw,...
-            options.SAGAs,...
-            options.SAGAsbest,...
-            options.SAGAbmat');
-    otherwise
-        displine('Warning',sprintf('Optimization function "%s" is not defined. Using',...
-            options.SAGAOptimizationMethod),'GA',options);
-        [path1, path2, distance]=tscu_saga_register(x,y,options.SAGABaseLength,...
-            options.SAGAz,...
-            options.SAGAw,...
-            options.SAGAs,...
-            options.SAGAsbest,...
-            options.SAGAbmat');
+if strcmpi(options.SAGAOptimizationMethod,'GA')
+    gaoptions = gaoptimset('Generations',100,...
+        'TolFun', eps, ...
+        'StallGenLimit',40,...
+        'Display','off',...
+        'PopulationSize',20,...
+        'PopInitRange',1*[-1;1]);
+    [sbest, distance]=ga(J,options.SAGABaseLength,[],[],[],[],-2,2,[],gaoptions);
+    [~,path2] = tscu_saga_warp(y,sbest);
+    path1=1:length(x);
+elseif strcmpi(options.SAGAOptimizationMethod,'Simplex')
+    [sbest, distance] = fminsearch(J,options.SAGAInitialSolution);
+    [~, path2] = tscu_saga_warp(y,sbest);
+    path1=1:length(x);
+elseif strcmpi(options.SAGAOptimizationMethod,'GA_MEX')
+    [path1, path2, distance]=tscu_saga_register(x,y,options.SAGABaseLength,...
+        options.SAGAz,...
+        options.SAGAw,...
+        options.SAGAs,...
+        options.SAGAsbest,...
+        options.SAGAbmat');
+else
+    displine('Warning',sprintf('Optimization function "%s" is not defined. Using',...
+        options.SAGAOptimizationMethod),'GA',options);
+    [path1, path2, distance]=tscu_saga_register(x,y,options.SAGABaseLength,...
+        options.SAGAz,...
+        options.SAGAw,...
+        options.SAGAs,...
+        options.SAGAsbest,...
+        options.SAGAbmat');
 end
 end
 
@@ -893,7 +835,7 @@ nworder = 3;
 wbasis = create_bspline_basis([1,nx], nwbasis, nworder);
 Wfd0 = fd(zeros(nwbasis,1), wbasis);
 
-[yfdnew,dummy,warpfd] = registerfd(xfd, yfd, Wfd0);
+[yfdnew,~,warpfd] = registerfd(xfd, yfd, Wfd0);
 
 ynew = eval_fd(yfdnew, 1:ny);
 warpvec = eval_mon(1:nx, warpfd);
