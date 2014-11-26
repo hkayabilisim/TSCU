@@ -30,6 +30,7 @@ function out = tscu(x,y,varargin)
 %    'SAGA'   : Signal Alignment via Genetic Algorithm
 %    'CREG'   : Curve Registration of Ramsay & Silverman
 %    'PTW'    : Parametric Time Warping
+%    'CTW'    : Canonical Time Warping
 %    default  : 'NONE'
 %
 %   'AlignmentFcn': Custom alignment function handle
@@ -119,6 +120,8 @@ function out = tscu(x,y,varargin)
 addpath('lib/export_fig');
 addpath('lib/creg');
 addpath('lib/Eilers2004/');
+addpath(genpath('lib/ctw/src'));
+addpath(genpath('lib/ctw/lib'));
 
 options = getDefaultOptions;
 if nargin == 0
@@ -199,6 +202,8 @@ elseif strcmpi(options.alignment,'DTW')
         options.alignmentfunction = @dtwalignment;
 elseif strcmpi(options.alignment,'PTW')
         options.alignmentfunction = @ptwalignment;
+elseif strcmpi(options.alignment,'CTW')
+        options.alignmentfunction = @ctwalignment;
 elseif strcmpi(options.alignment,'CDTW')
         options.alignmentfunction = @cdtwalignment;
 elseif strcmpi(options.alignment,'SAGA')
@@ -498,6 +503,8 @@ for i = 1 : n*m
         [alldistances(i), path1, path2] = dtwalignment(xObject,yObject,options);
     elseif strcmpi(Alignment,'PTW')
         [alldistances(i), path1, path2] = ptwalignment(xObject,yObject,options);
+    elseif strcmpi(Alignment,'CTW')
+        [alldistances(i), path1, path2] = ctwalignment(xObject,yObject,options);
     elseif strcmpi(Alignment,'CDTW')
         [alldistances(i), path1, path2] = cdtwalignment(xObject,yObject,options);
     elseif strcmpi(Alignment,'SAGA')
@@ -792,6 +799,13 @@ function [distance, path1, path2] = ptwalignment(x,y,options)
 %   [DISTANCE PATH1 PATH2]=PTWALIGNMENT(X,Y,OPTIONS) produces
 %   the warping via PTW method.
 [distance,path1,path2] = tscu_ptw(x,y,options);
+end
+
+function [distance, path1, path2] = ctwalignment(x,y,options)
+%CTWALIGNMENT Canonical Time Warping
+%   [DISTANCE PATH1 PATH2]=CTWALIGNMENT(X,Y,OPTIONS) produces
+%   the warping via CTW method.
+[distance,path1,path2] = tscu_ctw(x,y,options);
 end
 
 function [distance, path1, path2] = sagaalignment(x,y,options)

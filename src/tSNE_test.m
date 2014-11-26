@@ -1,4 +1,9 @@
+clear all
 close all 
+clc
+
+addpath('lib/export_fig')
+
 datasets = { ...
     6,'synthetic_control'           ,8,50,... % 1
     3,'Trace'                       ,2,20,...
@@ -42,14 +47,26 @@ datasets = { ...
     4,'uWaveGestureLibrary_X'       ,8,20}; % 40
 
 m=40;
-for i=35:35
+nn=10;
+all=zeros(m*nn,14);
+for i=[1:5 7:40]    
     dataname = datasets{4*(i-1)+2};
-    trnfile = sprintf('../../UCR/%s/%s_TRAIN',dataname,dataname);
-    tstfile = sprintf('../../UCR/%s/%s_TEST',dataname,dataname);
+    trnfile = sprintf('../../UCR/%s/%s_TRAIN.features',dataname,dataname);
+    %tstfile = sprintf('../../UCR/%s/%s_TEST',dataname,dataname);
+    
+    fprintf('Reading %s\n',dataname);
+
     trn = load(trnfile);
-    tst = load(tstfile);
-    mappedX = tsne(tst(:,2:end), tst(:,1));
-    pause
-    close all
+    %tst = load(tstfile);
+    
+    n=size(trn,2)-1;
+    for j=1:nn
+    all((i-1)*nn+j,2:end)=trn(j,2:end);
+    all((i-1)*nn+j,1)=i;
+    end
 end
+
+mappedX = tsne(all(:,2:end), all(:,1));
+%export_fig('-pdf','-transparent',...
+%      sprintf('tscu_test_sne_%02d_%s.pdf',i,dataname));
  
