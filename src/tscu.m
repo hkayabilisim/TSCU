@@ -300,7 +300,7 @@ tic
 if strcmpi(options.classifier,'K-NN')
         labels = nnclassifier(x,y,options);
 elseif strcmpi(options.classifier,'SVM')
-        labels = svmclassifier(x,y,options);
+        [labels,model] = svmclassifier(x,y,options);
 else
         labels = nnclassifier(x,y,options);
 end
@@ -326,6 +326,7 @@ end
 
 % Returning output
 out.labels              = labels;
+out.svmmodel            = model;
 out.truelabels          = y(:,1);
 out.classification_time = classification_time;
 out.perf                = perf;
@@ -617,7 +618,7 @@ displine('Info','Best C parameter',...
     sprintf('%12.5f [acc:%4f]',best_c,best_accuracy),options);
 end
 
-function labels = svmclassifier(x,y,options)
+function [labels,model] = svmclassifier(x,y,options)
 %SVMCLASSIFIER Support Vector Machine Classification
 %   LABELS = SVMCLASSIFIER(X,Y,OPTIONS)
 

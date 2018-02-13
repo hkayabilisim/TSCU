@@ -52,7 +52,7 @@ mex tscu_dtw.c
 % only one available for public access: Synthetic Control Dataset. If you 
 % haven't already downloaded it, then go ahead and run the following 
 % commands to fetch the dataset into the MATLAB workspace.
-ucr_address='http://www.cs.ucr.edu/~eamonn/time_series_data';
+ucr_address='https://web.archive.org/web/20150428055342/http://www.cs.ucr.edu/~eamonn/time_series_data';
 trnfile='synthetic_control_TRAIN';
 tstfile='synthetic_control_TEST';
 urlwrite([ucr_address '/' trnfile],trnfile);
