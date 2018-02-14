@@ -300,7 +300,7 @@ tic
 if strcmpi(options.classifier,'K-NN')
         labels = nnclassifier(x,y,options);
 elseif strcmpi(options.classifier,'SVM')
-        [labels,model] = svmclassifier(x,y,options);
+        [labels,svmmodel] = svmclassifier(x,y,options);
 else
         labels = nnclassifier(x,y,options);
 end
@@ -326,7 +326,9 @@ end
 
 % Returning output
 out.labels              = labels;
-out.svmmodel            = model;
+if strcmpi(options.classifier,'SVM')
+    out.svmmodel            = svmmodel;
+end
 out.truelabels          = y(:,1);
 out.classification_time = classification_time;
 out.perf                = perf;
@@ -481,56 +483,75 @@ function labels = nnclassifier(x,y,options)
 %   nearest neighbor algorithm resulting estimated labels LABELS.
 xlabels = x(:,1);
 ylabels = y(:,1);
+
 n = size(x,1); % training
 m = size(y,1); % testing
-[yIdx,xIdx] = meshgrid(1:m,1:n);
-alldistances = zeros(1,n*m);
-
+labels = zeros(m,1);
+mindistanceIdx = zeros(m,1);
+distanceMatrixSizeInMB = n*m*8/1024/1024 ;
+if distanceMatrixSizeInMB < 1
+    storeDistanceMatrix = 1;
+else
+    storeDistanceMatrix = 0;
+end
+if storeDistanceMatrix
+    distancematrix = zeros(n,m);
+end
 Alignment = options.alignment;
-DisplayAlignmentMat = zeros(n,m);
-DisplayAlignmentMat(options.DisplayAlignment{1},options.DisplayAlignment{2})=1;
+toBeDisplayedAlignmentsX = options.DisplayAlignment{1};
+toBeDisplayedAlignmentsY = options.DisplayAlignment{2};
 
-% It may seem awkward not to use two inner loops for a simple
-% K-NN classifier. The reason is that I should use just one loop
-% to easily distribute the job.
-for i = 1 : n*m
-    yObject = y(yIdx(i),2:end);
-    xObject = x(xIdx(i),2:end);
-    path1 = 1:numel(xObject);
-    path2 = 1:numel(yObject);
-    if strcmpi(Alignment,'NONE')
-        [alldistances(i), path1, path2] = nonealignment(xObject,yObject,options);
-    elseif strcmpi(Alignment,'DTW')
-        [alldistances(i), path1, path2] = dtwalignment(xObject,yObject,options);
-    elseif strcmpi(Alignment,'PTW')
-        [alldistances(i), path1, path2] = ptwalignment(xObject,yObject,options);
-    elseif strcmpi(Alignment,'CTW')
-        [alldistances(i), path1, path2] = ctwalignment(xObject,yObject,options);
-    elseif strcmpi(Alignment,'CDTW')
-        [alldistances(i), path1, path2] = cdtwalignment(xObject,yObject,options);
-    elseif strcmpi(Alignment,'SAGA')
-        [alldistances(i), path1, path2] = sagaalignment(xObject,yObject,options);
-    elseif strcmpi(Alignment,'CREG')
-        [alldistances(i), path1, path2] = cregalignment(xObject,yObject,options);
-    else
-        [alldistances(i), path1, path2] = nonealignment(xObject,yObject,options);
+% First loop over testing samples.
+% Compare the testing sample to every sample in
+% the training set and find the nearest one
+for j = 1 : m
+    yObject = y(j,2:end);
+    alldistances = zeros(n,1);
+    for i = 1 : n
+        xObject = x(i,2:end);
+        path1 = 1:numel(xObject);
+        path2 = 1:numel(yObject);
+        if strcmpi(Alignment,'NONE')
+            [alldistances(i), path1, path2] = nonealignment(xObject,yObject,options);
+        elseif strcmpi(Alignment,'DTW')
+            [alldistances(i), path1, path2] = dtwalignment(xObject,yObject,options);
+        elseif strcmpi(Alignment,'PTW')
+            [alldistances(i), path1, path2] = ptwalignment(xObject,yObject,options);
+        elseif strcmpi(Alignment,'CTW')
+            [alldistances(i), path1, path2] = ctwalignment(xObject,yObject,options);
+        elseif strcmpi(Alignment,'CDTW')
+            [alldistances(i), path1, path2] = cdtwalignment(xObject,yObject,options);
+        elseif strcmpi(Alignment,'SAGA')
+            [alldistances(i), path1, path2] = sagaalignment(xObject,yObject,options);
+        elseif strcmpi(Alignment,'CREG')
+            [alldistances(i), path1, path2] = cregalignment(xObject,yObject,options);
+        else
+            [alldistances(i), path1, path2] = nonealignment(xObject,yObject,options);
+        end
+        displine('Debug',sprintf('[%5d of %5d] dist(%4d,%4d)',(j-1)*m+i,n*m,j,i),...
+            sprintf('%f',alldistances(i)),options);
+        if ismember(i,toBeDisplayedAlignmentsX) && ismember(j,toBeDisplayedAlignmentsY)
+            displayAlignment(x,y,i,j,path1,path2,Alignment,options)
+        end
     end
-    displine('Debug',sprintf('[%5d of %5d] dist(%4d,%4d)',i,n*m,yIdx(i),xIdx(i)),...
-        sprintf('%f',alldistances(i)),options);
-    if DisplayAlignmentMat(i)
-        displayAlignment(x,y,xIdx(i),yIdx(i),path1,path2,Alignment,options)
+    [~,mindistanceIdx(j)]=min(alldistances);
+    labels(j) = xlabels(mindistanceIdx(j));
+    if storeDistanceMatrix
+        distancematrix(:,j) = alldistances;
     end
 end
-distancematrix = reshape(alldistances,n,m);
-[~,mindistanceIdx]=min(distancematrix);
-labels = xlabels(mindistanceIdx);
 displine('Debug','index of testing objects',sprintf('%3d ',1:m),options);
 displine('Debug','labels of testing objects (True)',sprintf('%3d ',ylabels),options);
 displine('Debug','labels of testing objects (Estimated)',sprintf('%3d ',labels),options);
 displine('Debug','closest training objects',sprintf('%3d ',mindistanceIdx),options);
 
 if strcmpi(options.DumpDistanceMatrix,'yes')
-    save(sprintf('tscu_distancematrix_%s.txt',Alignment),'distancematrix','-ascii');
+    if storeDistanceMatrix
+        save(sprintf('tscu_distancematrix_%s.txt',Alignment),'distancematrix','-ascii');
+    else
+        displine('Warning','DistanceMatrix not stored',...
+            sprintf('size is %f MB > 1MB',distanceMatrixSizeInMB),options);
+    end
 end
 
 end
@@ -618,7 +639,7 @@ displine('Info','Best C parameter',...
     sprintf('%12.5f [acc:%4f]',best_c,best_accuracy),options);
 end
 
-function [labels,model] = svmclassifier(x,y,options)
+function [labels,svmmodel] = svmclassifier(x,y,options)
 %SVMCLASSIFIER Support Vector Machine Classification
 %   LABELS = SVMCLASSIFIER(X,Y,OPTIONS)
 
@@ -674,8 +695,8 @@ elseif strcmpi(kerneltype,'gaussian')
 end
 svmopts=sprintf('-t 4 -h 1 -c %f -q',c); % Precomputed kernel matrix
 
-model = svmtrain(x(:,1),[(1:nx)',KernelTrain_vs_Train], svmopts);
-[labels,~,~] = svmpredict(y(:,1),[(1:ny)',KernelTest_vs_Train], model);
+svmmodel = svmtrain(x(:,1),[(1:nx)',KernelTrain_vs_Train], svmopts);
+[labels,~,~] = svmpredict(y(:,1),[(1:ny)',KernelTest_vs_Train], svmmodel);
 
 [~,p]=chol(KernelTrain_vs_Train);
 if p <= 0
