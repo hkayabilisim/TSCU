@@ -300,7 +300,7 @@ tic
 if strcmpi(options.classifier,'K-NN')
         labels = nnclassifier(x,y,options);
 elseif strcmpi(options.classifier,'SVM')
-        [labels,model] = svmclassifier(x,y,options);
+        [labels,svmmodel] = svmclassifier(x,y,options);
 else
         labels = nnclassifier(x,y,options);
 end
@@ -326,7 +326,9 @@ end
 
 % Returning output
 out.labels              = labels;
-out.svmmodel            = model;
+if strcmpi(options.classifier,'SVM')
+    out.svmmodel            = svmmodel;
+end
 out.truelabels          = y(:,1);
 out.classification_time = classification_time;
 out.perf                = perf;
