@@ -71,8 +71,10 @@ function out = tscu(x,y,varargin)
 %   'SAGAInitialSolution': Initial solution in SAGA
 %    default      : zero vector with length SAGABaseLength.
 %
-%   'CrossValidation': An integer specifying how many time the
-%    cross validation takes place.
+%   'CrossValidation': An integer specifying how many times the
+%    cross validation takes place. This option is used only during
+%    SVM model selection which takes place when 'SVMSoftMargin' 
+%    or 'SVMGamma' arrays contain more than one elements.
 %    default      : <2 means don't do cross validation
 %
 %   'MATLABPool': MATLAB pool used for parallel computing
