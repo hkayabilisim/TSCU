@@ -256,6 +256,12 @@ if numel(options.svmsoftmargin) > 1 && options.CrossValidation < 2
         'specify and array of soft margin parameters']);
 end
 
+if numel(options.svmgamma) > 1 && options.CrossValidation < 2
+    error('tscu:invalidoption',...
+        ['You should set CrossValidation >1 if you '...
+        'specify and array of SVM gamma parameters']);
+end
+
 if options.CrossValidation < 2
     displine('Info','No cross validation is chosen',...
         sprintf('%d',options.CrossValidation),options);
@@ -263,6 +269,14 @@ else
     displine('Info','Cross validation',...
         sprintf('%d',options.CrossValidation),options);
 end
+
+if options.CrossValidation ~= 1 && ...
+    (numel(options.svmgamma) == 1 && numel(options.svmsoftmargin) == 1)
+    warning('tscu:invalidoption',...
+        ['CrossValidation is ignored '...
+        'since neither "SVMGamma" nor "SVMSoftMargin" options are set.']);
+end
+
 if strcmpi(options.alignment,'SAGA')
     displine('Info','SAGA number of spline bases',...
         sprintf('%d',options.SAGABaseLength),options);
