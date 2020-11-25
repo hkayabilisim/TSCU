@@ -565,7 +565,7 @@ fold  = options.CrossValidation;
 
 cv_accuracies=zeros(length(glist),length(clist));
 
-for ig=1:length(glist);
+for ig=1:length(glist)
     gamma=glist(ig);
     kernel = zeros(nx,nx);    
     
@@ -588,8 +588,9 @@ for ig=1:length(glist);
     end
 end
 
-[~,best_c_index    ] = max(max(cv_accuracies));
-[~,best_gamma_index] = max(cv_accuracies(:,best_c_index));
+
+[~,best_c_index    ] = max(max(cv_accuracies,[],1));
+[~,best_gamma_index] = max(max(cv_accuracies,[],2));
 
 best_gamma   =glist(best_gamma_index);
 best_c       =clist(best_c_index);
