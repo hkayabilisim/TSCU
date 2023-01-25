@@ -76,7 +76,7 @@ Building with 'Xcode with Clang'.
 MEX completed successfully.
 Building with 'Xcode with Clang'.
 MEX completed successfully.
-</pre><h2>Loading a time series dataset<a name="3"></a></h2><p>For this tutorial we will use <a href="http://www.cs.ucr.edu/~eamonn/time_series_data">UCR time series repository</a> which contains more than 40 different datasets. You can send an e-mail to Dr. Keogh to download all of them. For the time being, we will use the only one available for public access: Synthetic Control Dataset. If you haven't already downloaded it, then go ahead and run the following commands to fetch the dataset into the MATLAB workspace.</p><pre class="codeinput">ucr_address=<span class="string">'https://web.archive.org/web/20150428055342id_/http://www.cs.ucr.edu/~eamonn/time_series_data'</span>;
+</pre><h2>Loading a time series dataset<a name="3"></a></h2><p>For this tutorial we will use <a href="http://www.cs.ucr.edu/~eamonn/time_series_data">UCR time series repository</a> which contains more than 40 different datasets. You can send an e-mail to Dr. Keogh to download all of them. For the time being, we will use the only one available for public access: Synthetic Control Dataset. If you haven't already downloaded it, then go ahead and run the following commands to fetch the dataset into the MATLAB workspace.</p><pre class="codeinput">ucr_address=<span class="string">'https://web.archive.org/web/20150428055342if_/http://www.cs.ucr.edu:80/~eamonn/time_series_data'</span>;
 trnfile=<span class="string">'synthetic_control_TRAIN'</span>;
 tstfile=<span class="string">'synthetic_control_TEST'</span>;
 urlwrite([ucr_address <span class="string">'/'</span> trnfile],trnfile);
@@ -447,14 +447,14 @@ mex tscu_saga_warp.c     tscu_saga_util.c
 mex tscu_dtw.c
 %% Loading a time series dataset
 % For this tutorial we will use 
-% <https://web.archive.org/web/20150428055342id_/http://www.cs.ucr.edu/~eamonn/time_series_data UCR time series
+% <https://web.archive.org/web/20150428055342if_/http://www.cs.ucr.edu:80/~eamonn/time_series_data UCR time series
 % repository> which contains more than 40 different datasets.
 % You can send an e-mail to
 % Dr. Keogh to download all of them. For the time being, we will use the 
 % only one available for public access: Synthetic Control Dataset. If you 
 % haven't already downloaded it, then go ahead and run the following 
 % commands to fetch the dataset into the MATLAB workspace.
-ucr_address='https://web.archive.org/web/20150428055342id_/http://www.cs.ucr.edu/~eamonn/time_series_data';
+ucr_address='https://web.archive.org/web/20150428055342if_/http://www.cs.ucr.edu:80/~eamonn/time_series_data';
 trnfile='synthetic_control_TRAIN';
 tstfile='synthetic_control_TEST';
 urlwrite([ucr_address '/' trnfile],trnfile);
