@@ -71,8 +71,10 @@ function out = tscu(x,y,varargin)
 %   'SAGAInitialSolution': Initial solution in SAGA
 %    default      : zero vector with length SAGABaseLength.
 %
-%   'CrossValidation': An integer specifying how many time the
-%    cross validation takes place.
+%   'CrossValidation': An integer specifying how many times the
+%    cross validation takes place. This option is used only during
+%    SVM model selection which takes place when 'SVMSoftMargin' 
+%    or 'SVMGamma' arrays contain more than one elements.
 %    default      : <2 means don't do cross validation
 %
 %   'MATLABPool': MATLAB pool used for parallel computing
@@ -254,6 +256,12 @@ if numel(options.svmsoftmargin) > 1 && options.CrossValidation < 2
         'specify and array of soft margin parameters']);
 end
 
+if numel(options.svmgamma) > 1 && options.CrossValidation < 2
+    error('tscu:invalidoption',...
+        ['You should set CrossValidation >1 if you '...
+        'specify and array of SVM gamma parameters']);
+end
+
 if options.CrossValidation < 2
     displine('Info','No cross validation is chosen',...
         sprintf('%d',options.CrossValidation),options);
@@ -261,6 +269,14 @@ else
     displine('Info','Cross validation',...
         sprintf('%d',options.CrossValidation),options);
 end
+
+if options.CrossValidation ~= 1 && ...
+    (numel(options.svmgamma) == 1 && numel(options.svmsoftmargin) == 1)
+    warning('tscu:invalidoption',...
+        ['CrossValidation is ignored '...
+        'since neither "SVMGamma" nor "SVMSoftMargin" options are set.']);
+end
+
 if strcmpi(options.alignment,'SAGA')
     displine('Info','SAGA number of spline bases',...
         sprintf('%d',options.SAGABaseLength),options);
@@ -584,7 +600,7 @@ fold  = options.CrossValidation;
 
 cv_accuracies=zeros(length(glist),length(clist));
 
-for ig=1:length(glist);
+for ig=1:length(glist)
     gamma=glist(ig);
     kernel = zeros(nx,nx);    
     
@@ -607,8 +623,9 @@ for ig=1:length(glist);
     end
 end
 
-[~,best_c_index    ] = max(max(cv_accuracies));
-[~,best_gamma_index] = max(cv_accuracies(:,best_c_index));
+
+[~,best_c_index    ] = max(max(cv_accuracies,[],1));
+[~,best_gamma_index] = max(max(cv_accuracies,[],2));
 
 best_gamma   =glist(best_gamma_index);
 best_c       =clist(best_c_index);
